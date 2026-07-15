@@ -1,0 +1,30 @@
+# Generated PDF-to-LaTeX conversion projects
+/latex/
+/latex-*/
+/conversion-output/
+/test-output/
+/tmp/
+
+# LaTeX build artifacts
+*.aux
+*.bbl
+*.bcf
+*.blg
+*.fdb_latexmk
+*.fls
+*.idx
+*.ilg
+*.ind
+*.lof
+*.log
+*.lot
+*.out
+*.run.xml
+*.synctex.gz
+*.toc
+
+# Local editor and OS noise
+.DS_Store
+Thumbs.db
+*.swp
+*.swo

@@ -1,0 +1,112 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "pdf-to-latex/page-complexity-index.schema.json",
+  "title": "PDF-to-LaTeX page complexity index",
+  "description": "A deterministic, source-bound index used to choose worker batch size and evidence escalation.",
+  "type": "object",
+  "required": ["schema_version", "kind", "source", "policy", "pages", "batches"],
+  "properties": {
+    "schema_version": {"const": 1},
+    "kind": {"const": "page-complexity-index"},
+    "created_at": {"type": "string", "minLength": 1},
+    "extractor": {"type": "string", "minLength": 1},
+    "source": {
+      "type": "object",
+      "required": ["path", "sha256", "size_bytes", "page_count"],
+      "properties": {
+        "path": {"type": "string", "minLength": 1},
+        "sha256": {"type": "string", "pattern": "^[0-9a-f]{64}$"},
+        "size_bytes": {"type": "integer", "minimum": 1},
+        "page_count": {"type": "integer", "minimum": 1}
+      },
+      "additionalProperties": false
+    },
+    "policy": {
+      "type": "object",
+      "required": ["source_kind", "traits", "batch_sizes", "worker_output", "evidence"],
+      "properties": {
+        "source_kind": {"type": "string", "minLength": 1},
+        "traits": {"type": "array", "items": {"type": "string"}},
+        "batch_sizes": {
+          "type": "object",
+          "required": ["low", "medium", "high", "critical"],
+          "properties": {
+            "low": {"type": "integer", "minimum": 1},
+            "medium": {"type": "integer", "minimum": 1},
+            "high": {"type": "integer", "minimum": 1},
+            "critical": {"type": "integer", "minimum": 1}
+          },
+          "additionalProperties": false
+        },
+        "worker_output": {"type": "string", "minLength": 1},
+        "evidence": {"type": "string", "minLength": 1}
+      },
+      "additionalProperties": false
+    },
+    "pages": {
+      "type": "array",
+      "minItems": 1,
+      "items": {
+        "type": "object",
+        "required": [
+          "page",
+          "text_chars",
+          "complexity",
+          "route",
+          "recommended_batch_size"
+        ],
+        "properties": {
+          "page": {"type": "integer", "minimum": 1},
+          "text_chars": {"type": "integer", "minimum": 0},
+          "nonempty_lines": {"type": "integer", "minimum": 0},
+          "word_count": {"type": "integer", "minimum": 0},
+          "formula_markers": {"type": "integer", "minimum": 0},
+          "table_lines": {"type": "integer", "minimum": 0},
+          "complexity_score": {"type": "integer", "minimum": 0},
+          "complexity": {"enum": ["low", "medium", "high", "critical"]},
+          "route": {"type": "string", "minLength": 1},
+          "evidence_policy": {"type": "string", "minLength": 1},
+          "recommended_batch_size": {"type": "integer", "minimum": 1},
+          "reason_codes": {"type": "array", "items": {"type": "string"}}
+        },
+        "additionalProperties": false
+      }
+    },
+    "batches": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "required": [
+          "batch_id",
+          "owned_pages",
+          "context_pages",
+          "complexity",
+          "route",
+          "worker_mode",
+          "detail_policy"
+        ],
+        "properties": {
+          "batch_id": {"type": "string", "minLength": 1},
+          "owned_pages": {
+            "type": "array",
+            "minItems": 1,
+            "uniqueItems": true,
+            "items": {"type": "integer", "minimum": 1}
+          },
+          "context_pages": {
+            "type": "array",
+            "uniqueItems": true,
+            "items": {"type": "integer", "minimum": 1}
+          },
+          "complexity": {"enum": ["low", "medium", "high", "critical"]},
+          "route": {"type": "string", "minLength": 1},
+          "worker_mode": {"enum": ["batch", "single-page"]},
+          "detail_policy": {"type": "string", "minLength": 1},
+          "text_chars": {"type": "integer", "minimum": 0}
+        },
+        "additionalProperties": false
+      }
+    }
+  },
+  "additionalProperties": false
+}

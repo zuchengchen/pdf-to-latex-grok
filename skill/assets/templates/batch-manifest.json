@@ -1,0 +1,20 @@
+{
+  "schema_version": 1,
+  "source": {
+    "path": {{SOURCE_PDF_JSON}},
+    "sha256": {{SOURCE_SHA256_JSON}},
+    "size_bytes": {{SOURCE_SIZE_BYTES}},
+    "page_count": {{SOURCE_PAGE_COUNT}}
+  },
+  "project": {
+    "target_directory": {{TARGET_DIR_JSON}},
+    "operation": {{OPERATION_JSON}},
+    "execution_mode": {{EXECUTION_MODE_JSON}},
+    "created_at": {{DATE_UTC_JSON}}
+  },
+  "context": {
+    "style_profile_sha256": null,
+    "document_ir_sha256": null
+  },
+  "batches": []
+}

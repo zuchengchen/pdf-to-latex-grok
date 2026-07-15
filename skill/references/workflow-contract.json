@@ -1,0 +1,729 @@
+{
+  "skill_version": "1.0.0",
+  "contract_version": 1,
+  "state_schema_version": 2,
+  "minimum_python_version": "3.10",
+  "canonical_fields": {
+    "operation": {
+      "markdown_label": "Operation",
+      "values": [
+        "convert",
+        "resume",
+        "refine",
+        "repair",
+        "review"
+      ]
+    },
+    "source_kind": {
+      "markdown_label": "Source kind",
+      "values": [
+        "digital",
+        "scanned",
+        "mixed",
+        "unknown"
+      ]
+    },
+    "document_traits": {
+      "markdown_label": "Document traits",
+      "empty_value": "none",
+      "values": [
+        "book",
+        "long-document",
+        "math-heavy",
+        "encoded-math",
+        "cjk",
+        "visual-complex"
+      ]
+    },
+    "delivery_level": {
+      "markdown_label": "Delivery level",
+      "values": [
+        "rough-draft",
+        "clean-semantic",
+        "publication-polish"
+      ]
+    },
+    "execution_mode": {
+      "markdown_label": "Execution mode",
+      "values": [
+        "one-turn",
+        "resumable",
+        "goal-backed"
+      ]
+    },
+    "verification_scope": {
+      "markdown_label": "Verification scope",
+      "values": [
+        "source-aware",
+        "project-only"
+      ]
+    },
+    "outcome": {
+      "markdown_label": "Outcome",
+      "values": [
+        "complete",
+        "blocked",
+        "downgraded",
+        "in-progress"
+      ]
+    }
+  },
+  "outcome_exit_codes": {
+    "complete": 0,
+    "downgraded": 0,
+    "in-progress": 1,
+    "blocked": 2,
+    "invalid": 1
+  },
+  "tracking": {
+    "statuses": [
+      "pending",
+      "in-progress",
+      "rebuilt",
+      "reviewed",
+      "blocked",
+      "omitted-with-reason"
+    ],
+    "complete_statuses": [
+      "rebuilt",
+      "reviewed",
+      "omitted-with-reason"
+    ],
+    "required_gate_complete_statuses": [
+      "reviewed"
+    ],
+    "compile_checks": [
+      "not-run",
+      "pass",
+      "fail"
+    ],
+    "visual_reviews": [
+      "not-run",
+      "pass",
+      "fail",
+      "not-applicable"
+    ],
+    "source_fidelity": [
+      "in-progress",
+      "verified",
+      "not-verified-source-unavailable",
+      "not-verified-by-scope"
+    ],
+    "record_files": [
+      "page-manifest.md",
+      "object-inventory.md",
+      "style-profile.md",
+      "document-ir.md",
+      "math-inventory.md",
+      "glyph-map.md"
+    ]
+  },
+  "state": {
+    "file": "conversion-state.md",
+    "notes_file": "conversion-notes.md",
+    "state_required_operations": [
+      "convert",
+      "resume",
+      "refine"
+    ],
+    "state_optional_operations": [
+      "repair"
+    ],
+    "stateless_operations": [
+      "review"
+    ],
+    "required_metadata": [
+      "State schema",
+      "Skill version",
+      "Contract version",
+      "Source PDF",
+      "Source PDF SHA-256",
+      "Source PDF size bytes",
+      "Source PDF page count",
+      "Operation",
+      "Source kind",
+      "Document traits",
+      "Delivery level",
+      "Execution mode",
+      "Verification scope",
+      "Outcome",
+      "Compile check",
+      "Visual review",
+      "Source fidelity",
+      "Next action"
+    ],
+    "notes_metadata": [
+      "State schema",
+      "Skill version",
+      "Contract version",
+      "Source PDF",
+      "Operation",
+      "Source kind",
+      "Document traits",
+      "Delivery level",
+      "Execution mode",
+      "Verification scope",
+      "Outcome"
+    ],
+    "conditional_metadata": {
+      "downgraded": [
+        "Previous delivery level",
+        "Downgrade approval"
+      ]
+    },
+    "forbidden_metadata": [
+      "Task profile"
+    ]
+  },
+  "path_rules": [
+    {
+      "id": "all-projects",
+      "when": {},
+      "require_files": [
+        "main.tex"
+      ]
+    },
+    {
+      "id": "stateful-workflow",
+      "when": {
+        "operation": [
+          "convert",
+          "resume",
+          "refine"
+        ]
+      },
+      "require_files": [
+        "conversion-state.md",
+        "conversion-notes.md"
+      ]
+    },
+    {
+      "id": "durable-repair-workflow",
+      "when": {
+        "operation": [
+          "repair"
+        ],
+        "execution_mode": [
+          "resumable",
+          "goal-backed"
+        ]
+      },
+      "require_files": [
+        "conversion-state.md",
+        "conversion-notes.md"
+      ]
+    },
+    {
+      "id": "publication-repair-workflow",
+      "when": {
+        "operation": [
+          "repair"
+        ],
+        "delivery_level": [
+          "publication-polish"
+        ]
+      },
+      "require_files": [
+        "conversion-state.md",
+        "conversion-notes.md"
+      ]
+    },
+    {
+      "id": "full-reconstruction-model",
+      "when": {
+        "operation": [
+          "convert",
+          "resume"
+        ]
+      },
+      "require_files": [
+        "page-manifest.md",
+        "object-inventory.md",
+        "style-profile.md",
+        "document-ir.md"
+      ]
+    },
+    {
+      "id": "refinement-style-model",
+      "when": {
+        "operation": [
+          "refine"
+        ]
+      },
+      "require_files": [
+        "style-profile.md"
+      ]
+    },
+    {
+      "id": "publication-refinement-model",
+      "when": {
+        "operation": [
+          "refine"
+        ],
+        "delivery_level": [
+          "publication-polish"
+        ]
+      },
+      "require_files": [
+        "page-manifest.md",
+        "object-inventory.md",
+        "document-ir.md"
+      ]
+    },
+    {
+      "id": "publication-repair-style",
+      "when": {
+        "operation": [
+          "repair"
+        ],
+        "delivery_level": [
+          "publication-polish"
+        ]
+      },
+      "require_files": [
+        "style-profile.md"
+      ]
+    },
+    {
+      "id": "visual-source-model",
+      "when": {
+        "operation": [
+          "convert",
+          "resume",
+          "refine"
+        ],
+        "source_kind": [
+          "scanned",
+          "mixed"
+        ]
+      },
+      "require_files": [
+        "page-manifest.md",
+        "object-inventory.md",
+        "document-ir.md"
+      ]
+    },
+    {
+      "id": "book-model",
+      "when": {
+        "operation": [
+          "convert",
+          "resume",
+          "refine"
+        ],
+        "traits_any": [
+          "book"
+        ]
+      },
+      "require_files": [
+        "page-manifest.md",
+        "object-inventory.md",
+        "style-profile.md",
+        "document-ir.md"
+      ]
+    },
+    {
+      "id": "long-document-model",
+      "when": {
+        "operation": [
+          "convert",
+          "resume",
+          "refine"
+        ],
+        "traits_any": [
+          "long-document"
+        ]
+      },
+      "require_files": [
+        "page-manifest.md",
+        "document-ir.md"
+      ]
+    },
+    {
+      "id": "math-model",
+      "when": {
+        "operation": [
+          "convert",
+          "resume",
+          "refine"
+        ],
+        "traits_any": [
+          "math-heavy",
+          "encoded-math"
+        ]
+      },
+      "require_files": [
+        "object-inventory.md",
+        "math-inventory.md",
+        "glyph-map.md"
+      ]
+    },
+    {
+      "id": "durable-math-repair-model",
+      "when": {
+        "operation": [
+          "repair"
+        ],
+        "execution_mode": [
+          "resumable",
+          "goal-backed"
+        ],
+        "traits_any": [
+          "math-heavy",
+          "encoded-math"
+        ]
+      },
+      "require_files": [
+        "object-inventory.md",
+        "math-inventory.md",
+        "glyph-map.md"
+      ]
+    },
+    {
+      "id": "publication-math-repair-model",
+      "when": {
+        "operation": [
+          "repair"
+        ],
+        "delivery_level": [
+          "publication-polish"
+        ],
+        "traits_any": [
+          "math-heavy",
+          "encoded-math"
+        ]
+      },
+      "require_files": [
+        "object-inventory.md",
+        "math-inventory.md",
+        "glyph-map.md"
+      ]
+    },
+    {
+      "id": "cjk-style-model",
+      "when": {
+        "operation": [
+          "convert",
+          "resume",
+          "refine"
+        ],
+        "traits_any": [
+          "cjk"
+        ]
+      },
+      "require_files": [
+        "style-profile.md"
+      ]
+    },
+    {
+      "id": "durable-cjk-repair-model",
+      "when": {
+        "operation": [
+          "repair"
+        ],
+        "execution_mode": [
+          "resumable",
+          "goal-backed"
+        ],
+        "traits_any": [
+          "cjk"
+        ]
+      },
+      "require_files": [
+        "style-profile.md"
+      ]
+    },
+    {
+      "id": "publication-cjk-repair-model",
+      "when": {
+        "operation": [
+          "repair"
+        ],
+        "delivery_level": [
+          "publication-polish"
+        ],
+        "traits_any": [
+          "cjk"
+        ]
+      },
+      "require_files": [
+        "style-profile.md"
+      ]
+    },
+    {
+      "id": "visual-complex-model",
+      "when": {
+        "operation": [
+          "convert",
+          "resume",
+          "refine"
+        ],
+        "traits_any": [
+          "visual-complex"
+        ]
+      },
+      "require_files": [
+        "page-manifest.md",
+        "object-inventory.md",
+        "style-profile.md"
+      ]
+    }
+  ],
+  "gate_rules": [
+    {
+      "id": "stateful-base",
+      "when": {
+        "operation": [
+          "convert",
+          "resume",
+          "refine"
+        ]
+      },
+      "require_gates": [
+        "workflow-setup",
+        "build-verification",
+        "final-state-review"
+      ]
+    },
+    {
+      "id": "durable-repair-base",
+      "when": {
+        "operation": [
+          "repair"
+        ],
+        "execution_mode": [
+          "resumable",
+          "goal-backed"
+        ]
+      },
+      "require_gates": [
+        "workflow-setup",
+        "build-verification",
+        "final-state-review"
+      ]
+    },
+    {
+      "id": "convert-gates",
+      "when": {
+        "operation": [
+          "convert"
+        ]
+      },
+      "require_gates": [
+        "source-analysis",
+        "semantic-reconstruction"
+      ]
+    },
+    {
+      "id": "resume-gates",
+      "when": {
+        "operation": [
+          "resume"
+        ]
+      },
+      "require_gates": [
+        "resume-integrity",
+        "semantic-reconstruction"
+      ]
+    },
+    {
+      "id": "refine-gates",
+      "when": {
+        "operation": [
+          "refine"
+        ]
+      },
+      "require_gates": [
+        "refinement-review"
+      ]
+    },
+    {
+      "id": "repair-gates",
+      "when": {
+        "operation": [
+          "repair"
+        ],
+        "execution_mode": [
+          "resumable",
+          "goal-backed"
+        ]
+      },
+      "require_gates": [
+        "repair-verification"
+      ]
+    },
+    {
+      "id": "source-aware-gates",
+      "when": {
+        "operation": [
+          "convert",
+          "resume",
+          "refine",
+          "review"
+        ],
+        "verification_scope": [
+          "source-aware"
+        ]
+      },
+      "require_gates": [
+        "source-fidelity-review"
+      ]
+    },
+    {
+      "id": "durable-source-aware-repair-gates",
+      "when": {
+        "operation": [
+          "repair"
+        ],
+        "execution_mode": [
+          "resumable",
+          "goal-backed"
+        ],
+        "verification_scope": [
+          "source-aware"
+        ]
+      },
+      "require_gates": [
+        "source-fidelity-review"
+      ]
+    },
+    {
+      "id": "publication-source-aware-repair-gates",
+      "when": {
+        "operation": [
+          "repair"
+        ],
+        "delivery_level": [
+          "publication-polish"
+        ],
+        "verification_scope": [
+          "source-aware"
+        ]
+      },
+      "require_gates": [
+        "source-fidelity-review"
+      ]
+    },
+    {
+      "id": "publication-gates",
+      "when": {
+        "operation": [
+          "convert",
+          "resume",
+          "refine",
+          "review"
+        ],
+        "delivery_level": [
+          "publication-polish"
+        ]
+      },
+      "require_gates": [
+        "artifact-scan",
+        "clean-room-build",
+        "publication-review"
+      ]
+    },
+    {
+      "id": "publication-repair-gates",
+      "when": {
+        "operation": [
+          "repair"
+        ],
+        "delivery_level": [
+          "publication-polish"
+        ]
+      },
+      "require_gates": [
+        "workflow-setup",
+        "build-verification",
+        "final-state-review",
+        "repair-verification",
+        "artifact-scan",
+        "clean-room-build",
+        "publication-review"
+      ]
+    },
+    {
+      "id": "book-gates",
+      "when": {
+        "operation": [
+          "convert",
+          "resume",
+          "refine",
+          "review"
+        ],
+        "traits_any": [
+          "book"
+        ]
+      },
+      "require_gates": [
+        "book-structure-review"
+      ]
+    },
+    {
+      "id": "math-gates",
+      "when": {
+        "operation": [
+          "convert",
+          "resume",
+          "refine",
+          "review"
+        ],
+        "traits_any": [
+          "math-heavy",
+          "encoded-math"
+        ]
+      },
+      "require_gates": [
+        "math-object-review"
+      ]
+    },
+    {
+      "id": "durable-math-repair-gates",
+      "when": {
+        "operation": [
+          "repair"
+        ],
+        "execution_mode": [
+          "resumable",
+          "goal-backed"
+        ],
+        "traits_any": [
+          "math-heavy",
+          "encoded-math"
+        ]
+      },
+      "require_gates": [
+        "math-object-review"
+      ]
+    },
+    {
+      "id": "publication-math-repair-gates",
+      "when": {
+        "operation": [
+          "repair"
+        ],
+        "delivery_level": [
+          "publication-polish"
+        ],
+        "traits_any": [
+          "math-heavy",
+          "encoded-math"
+        ]
+      },
+      "require_gates": [
+        "math-object-review"
+      ]
+    }
+  ],
+  "constraints": {
+    "source_required_operations": [
+      "convert"
+    ],
+    "delivery_rank": {
+      "rough-draft": 0,
+      "clean-semantic": 1,
+      "publication-polish": 2
+    }
+  }
+}
