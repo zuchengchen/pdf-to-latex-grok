@@ -48,15 +48,49 @@ Use /pdf-to-latex to OPERATION SOURCE into TARGET at DELIVERY_LEVEL. Treat TARGE
 
 ## Parallel Worker Protocol
 
-For resumable or goal-backed reconstruction, keep one parent controller (the main agent session, optionally with an active Goal). Do not create a Goal per page. The parent owns `conversion-state.md`, `conversion-notes.md`, `batch-manifest.json`, shared LaTeX source, compilation, and the terminal outcome.
+### Prefer Subagents (Token-Saving Default)
 
-Use subagents only for bounded work with disjoint ownership. Run `scripts/plan_batches.py` once the source text-layer evidence exists and dispatch the batches recorded in `work/page-index.json`; do not default to one worker per page. Launch workers with Grok `spawn_subagent` using an isolated context rather than copying the full parent or Goal history. When the runtime supports model inheritance, omit child `model` overrides so the worker uses the parent capability. Give each worker a compact context packet: source digest, owned pages or regions, read-only neighbor pages, evidence paths, style/document-IR snapshot hashes, route, output directory, and the page-IR schema.
+For multi-page `convert`, broad `resume` / `refine`, and other batchable reconstruction, **prefer `spawn_subagent` workers** whenever Grok subagents are enabled. Do not keep page-IR reconstruction inside the parent context when batches exist. Parent-only reconstruction is reserved for true `one-turn` local repair, tiny one-page fixes, or when subagents are disabled.
 
-Workers write only their own shard under `work/shards/` or return a compact artifact manifest. New workers should use page-IR schema version 2: each page carries counts and status, `worker_summary.text` is at most 1200 characters, and detailed blocks, objects, continuity, and uncertainties live in a hashed `detail_artifact`. Legacy v1 shards remain readable for migration. Workers must not edit `main.tex`, shared chapter files, inventories, state, notes, or Goal status. A page is an evidence unit, not necessarily a semantic boundary: workers report continuity, object candidates, uncertainties, and proposed lifecycle status for the parent reducer to resolve in the detail artifact.
+Keep one parent controller (the main agent session, optionally with an active Goal). Do not create a Goal per page. The parent owns `conversion-state.md`, `conversion-notes.md`, `batch-manifest.json`, shared LaTeX source, compilation, merge, and the terminal outcome.
+
+Run `scripts/plan_batches.py` once source text-layer evidence exists and dispatch every planned batch from `work/page-index.json`. Prefer a **bounded concurrent pool** of workers (spawn several in background, merge as they finish) over one long-lived mega-agent. Do not default to one worker per page for ordinary prose; use the planner batch sizes. Use one-page or one-region workers only for high-risk pages.
+
+### Minimal Worker Context (Hard)
+
+Launch each worker with Grok `spawn_subagent` in an **isolated context**. Omit child `model` overrides when inheritance is available. Pass only a **compact context packet**—nothing else.
+
+**Include (and only these, as short bullets or a tiny JSON block):**
+
+- batch id and owned page/region numbers;
+- source PDF path + SHA-256 digest + page count;
+- read-only neighbor page numbers (at most ±1 page, or omit if not needed);
+- absolute or project-relative paths to evidence for owned pages only (renders, text extracts);
+- style/document-IR **snapshot hashes** (not full IR dumps);
+- route labels for owned pages;
+- shard output directory / expected shard path;
+- pointer to `assets/schemas/page-ir.schema.json` (path only);
+- 5–15 line standing orders: write shard only; page-IR v2; no shared edits; prefer original figure extract/crop; max summary length.
+
+**Exclude from every worker prompt (do not paste):**
+
+- full `SKILL.md`, reference manuals, or long workflow essays;
+- full Goal objective, chat history, or parent transcript;
+- entire `conversion-notes.md`, full inventories, or full document IR;
+- unrelated chapters, full `main.tex`, or whole-project tree listings;
+- all-page evidence dumps; only owned (+ optional neighbor) paths;
+- large base64 images; workers open image **paths** themselves;
+- prior batch transcripts or other workers' detail artifacts.
+
+Prefer **paths over content**: tell the worker where files are; let it read only what it needs. Prefer **hashes and page lists over prose**. Cap the worker prompt body so the packet stays small (aim well under a few thousand tokens of instruction text excluding tool-fetched files).
+
+Workers write only their own shard under `work/shards/` or return a compact artifact manifest. New workers must use page-IR schema version 2: each page carries counts and status, `worker_summary.text` is at most 1200 characters, and detailed blocks, objects, continuity, and uncertainties live in a hashed `detail_artifact` on disk. Legacy v1 shards remain readable for migration. Workers must not edit `main.tex`, shared chapter files, inventories, state, notes, or Goal status. A page is an evidence unit, not necessarily a semantic boundary: workers report continuity, object candidates, uncertainties, and proposed lifecycle status for the parent reducer to resolve in the detail artifact.
+
+### Parent Merge Discipline
 
 Merge shards through `scripts/merge_shards.py` at one integration point. The merger verifies source identity, unique page ownership, artifact hashes, snapshot compatibility, and idempotency before updating `batch-manifest.json`. Cross-page blocks, global labels and references, glyph maps, bibliography, index, glossary, shared preamble, and final compilation remain serialized parent work.
 
-Keep child responses short and durable. The parent should record only batch IDs, coverage, compact summaries, hashes, blockers, usage, and the next action in its working context; full transcripts and detail artifacts remain in project files. Do not read every detail artifact after a successful merge. Load detail only for a blocker, uncertainty, cross-page reconciliation, or failed integration. Close completed workers, retry only failed or stale shards, and invalidate shards when the source digest or referenced snapshot changes.
+Keep child responses short and durable. The parent should record only batch IDs, coverage, compact summaries, hashes, blockers, usage, and the next action in its working context; full transcripts and detail artifacts remain in project files. **Do not read every detail artifact after a successful merge.** Load detail only for a blocker, uncertainty, cross-page reconciliation, or failed integration. Close completed workers, retry only failed or stale shards, and invalidate shards when the source digest or referenced snapshot changes.
 
 ## Continuation
 

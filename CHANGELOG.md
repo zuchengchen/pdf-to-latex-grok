@@ -2,6 +2,8 @@
 
 ## Unreleased
 
+- Prefer spawning subagents for multi-page reconstruction with minimal
+  per-worker context packets to reduce token use.
 - Prefer original PDF figure assets (extract/crop + `\includegraphics`) over
   TikZ or other LaTeX redraws by default.
 - Make continuity auto-start: never block on Goal startup; use `resumable` by

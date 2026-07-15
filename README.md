@@ -104,7 +104,7 @@ pinning is never required before reconstruction starts.
 
 ## Parallel Reconstruction
 
-Long resumable and goal-backed conversions use one parent controller and a bounded pool of isolated workers. Workers may inspect one page, region, or small structural batch and produce a page-IR shard, but they do not edit shared LaTeX, workflow state, or the final PDF. Page ownership is non-overlapping; neighboring pages are read-only context because page boundaries are not semantic boundaries.
+Long resumable and goal-backed conversions **prefer** one parent controller plus a bounded pool of `spawn_subagent` workers to save parent tokens. Each worker gets a compact context packet (page lists, evidence paths, hashes—not full skill/Goal/chat dumps), writes only a page-IR shard, and does not edit shared LaTeX, workflow state, or the final PDF. Page ownership is non-overlapping; neighboring pages are optional read-only context because page boundaries are not semantic boundaries.
 
 Before dispatch, `skill/scripts/plan_batches.py` uses local `pdfinfo` and `pdftotext` evidence to write a source-bound `work/page-index.json`. Ordinary digital prose is grouped into larger batches, complex pages use smaller batches, and one-page or one-region workers are reserved for high-risk pages. This avoids paying the fixed worker prompt cost for every page.
 

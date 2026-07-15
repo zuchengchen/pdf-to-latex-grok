@@ -1620,6 +1620,8 @@ def validate_package(skill_dir: Path, contract: dict[str, Any]) -> list[str]:
                 "blocker threshold": "Goal blocker-threshold handling",
                 "update_goal": "Grok update_goal progress/completion",
                 "spawn_subagent": "Grok spawn_subagent workers",
+                "prefer `spawn_subagent`": "prefer subagents for multi-page work",
+                "compact context packet": "minimal worker context",
                 "conversion-state.md": "project state authoritative",
             }
             for marker, label in required_goal_rules.items():

@@ -130,7 +130,7 @@ After drafting and focused passes, conduct separate final reviews:
 - `math/object`: formulas, theorem-like material, tables, figures, captions, citations, labels, and inventory coverage.
 - `build/layout`: safe compile findings, missing assets, references, fonts, clipping, blank pages, floats, readability, dependency closure, and clean rebuild.
 
-Use subagents for bounded independent reviews or isolated page-IR reconstruction when useful. Give reconstruction workers only their non-overlapping pages or regions, read-only neighbor context, raw evidence, the delivery contract, and the current snapshot hashes; give reviewers raw evidence and the delivery contract, not expected findings. Workers return shard artifacts or findings only; the main agent owns shard merging, edits, compilation, state, and the completion decision.
+Prefer subagents for page-IR reconstruction batches and for bounded independent reviews when multi-page work remains. Give reconstruction workers only their non-overlapping pages or regions, optional ±1 neighbor context, raw evidence **paths**, snapshot hashes, output path, and short standing orders—not full skill/Goal/chat dumps. Give reviewers raw evidence paths and the delivery contract, not expected findings. Workers return shard artifacts or findings only; the main agent owns shard merging, edits, compilation, state, and the completion decision.
 
 Use a concrete finding format:
 
