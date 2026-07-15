@@ -32,7 +32,9 @@ VALID_TRAITS = {
     "cjk",
     "visual-complex",
 }
-DEFAULT_BATCH_SIZES = {"low": 30, "medium": 10, "high": 5, "critical": 1}
+# Base sizes by complexity. Adaptive scaling by source_kind/traits is applied in
+# resolve_batch_sizes(). Scanned empties must not collapse to critical/1-page.
+DEFAULT_BATCH_SIZES = {"low": 35, "medium": 12, "high": 6, "critical": 1}
 FORMULA_RE = re.compile(
     r"(?:\\(?:alpha|begin|beta|corollary|end|equation|frac|gamma|int|lambda|lemma|proof|sqrt|sum|theorem)\b)"
     r"|(?:[=<>^_])|(?:\b(?:equation|theorem|lemma|proof|corollary)\b)",
@@ -152,6 +154,46 @@ def extract_page_texts(source: Path, page_count: int, log_path: Path) -> tuple[l
     return pages, "pdftotext-per-page"
 
 
+def resolve_batch_sizes(
+    source_kind: str,
+    traits: Sequence[str],
+    base: dict[str, int] | None = None,
+) -> dict[str, int]:
+    """Scale batch sizes by document class without requiring per-document hardcoding."""
+    sizes = dict(base or DEFAULT_BATCH_SIZES)
+    trait_set = set(traits)
+
+    if source_kind == "scanned":
+        # Scanned books usually lack a text layer; keep multi-page visual batches.
+        sizes["high"] = max(sizes["high"], 6)
+        sizes["medium"] = max(sizes["medium"], 8)
+        sizes["low"] = max(sizes["low"], 12)
+    elif source_kind == "mixed":
+        sizes["high"] = max(sizes["high"], 5)
+        sizes["medium"] = max(sizes["medium"], 10)
+    elif source_kind == "digital":
+        sizes["low"] = max(sizes["low"], 30)
+
+    if "long-document" in trait_set or "book" in trait_set:
+        sizes["low"] = max(sizes["low"], 40)
+        sizes["medium"] = max(sizes["medium"], 12)
+        if source_kind in {"scanned", "mixed"}:
+            sizes["high"] = max(sizes["high"], 6)
+
+    if "math-heavy" in trait_set or "encoded-math" in trait_set:
+        sizes["low"] = min(sizes["low"], 25)
+        sizes["medium"] = min(sizes["medium"], 10)
+        sizes["high"] = min(max(sizes["high"], 4), 5)
+
+    if "visual-complex" in trait_set:
+        sizes["high"] = min(sizes["high"], 4)
+        sizes["medium"] = min(sizes["medium"], 8)
+
+    # Critical stays single-page (or caller override) for true high-risk pages only.
+    sizes["critical"] = max(1, sizes.get("critical", 1))
+    return sizes
+
+
 def classify_page(
     text: str,
     source_kind: str,
@@ -164,6 +206,7 @@ def classify_page(
     text_chars = len(normalized.strip())
     word_count = len(WORD_RE.findall(normalized))
     formula_markers = len(FORMULA_RE.findall(normalized))
+    empty_text = not normalized.strip()
     table_lines = sum(
         1
         for line in nonempty_lines
@@ -174,7 +217,7 @@ def classify_page(
 
     reasons: list[str] = []
     score = 0
-    if not normalized.strip():
+    if empty_text:
         reasons.append("empty-text-layer")
     if source_kind == "scanned":
         score += 4
@@ -182,7 +225,7 @@ def classify_page(
     elif source_kind == "mixed":
         score += 2
         reasons.append("mixed-source")
-    if text_chars < 240 and normalized.strip():
+    if text_chars < 240 and not empty_text:
         score += 2
         reasons.append("short-text-layer")
     if formula_markers >= 2:
@@ -198,7 +241,14 @@ def classify_page(
         score += 2
         reasons.append("visual-complex-trait")
 
-    if not normalized.strip():
+    # Empty text on scanned (or image-only mixed) pages is expected — do not force
+    # critical/single-page batches for every page of a scan.
+    if empty_text and source_kind == "scanned":
+        complexity = "high"
+    elif empty_text and source_kind == "mixed":
+        complexity = "high"
+        reasons.append("mixed-empty-page")
+    elif empty_text:
         complexity = "critical"
     elif source_kind == "scanned":
         complexity = "high"
@@ -215,7 +265,7 @@ def classify_page(
     }.intersection(traits):
         complexity = "medium"
 
-    if not normalized.strip() or source_kind == "scanned":
+    if empty_text or source_kind == "scanned":
         route = "visual-transcription"
         evidence_policy = "rendered-page-required"
     elif formula_markers >= 2 or "math-heavy" in traits or "encoded-math" in traits:
@@ -414,12 +464,17 @@ def main(argv: Sequence[str] | None = None) -> int:
         page_texts, extractor = extract_page_texts(
             Path(identity.path), identity.page_count, log_path
         )
-        batch_sizes = {
-            "low": args.low_batch_size,
-            "medium": args.medium_batch_size,
-            "high": args.high_batch_size,
-            "critical": args.critical_batch_size,
-        }
+        # Start from CLI sizes (defaults or user overrides), then adapt by class.
+        batch_sizes = resolve_batch_sizes(
+            source_kind,
+            traits,
+            {
+                "low": args.low_batch_size,
+                "medium": args.medium_batch_size,
+                "high": args.high_batch_size,
+                "critical": args.critical_batch_size,
+            },
+        )
         index = build_index(identity, page_texts, source_kind, traits, batch_sizes, extractor)
         output = project / PAGE_INDEX_RELATIVE
         write_json_atomic(output, index)

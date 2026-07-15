@@ -84,6 +84,8 @@ Launch each worker with Grok `spawn_subagent` in an **isolated context**. Omit c
 
 Prefer **paths over content**: tell the worker where files are; let it read only what it needs. Prefer **hashes and page lists over prose**. Cap the worker prompt body so the packet stays small (aim well under a few thousand tokens of instruction text excluding tool-fetched files).
 
+Point workers at `assets/templates/worker-brief.md` (or a project copy under `work/worker-brief.md`) for standing orders instead of pasting long manuals. Packet = page lists + paths + hashes + brief path.
+
 Workers write only their own shard under `work/shards/` or return a compact artifact manifest. New workers must use page-IR schema version 2: each page carries counts and status, `worker_summary.text` is at most 1200 characters, and detailed blocks, objects, continuity, and uncertainties live in a hashed `detail_artifact` on disk. Legacy v1 shards remain readable for migration. Workers must not edit `main.tex`, shared chapter files, inventories, state, notes, or Goal status. A page is an evidence unit, not necessarily a semantic boundary: workers report continuity, object candidates, uncertainties, and proposed lifecycle status for the parent reducer to resolve in the detail artifact.
 
 ### Parent Merge Discipline
@@ -106,6 +108,27 @@ On every continuation (same session, resume request, or active Goal):
 8. Run the applicable workflow query or validation command and continue while the valid outcome remains `in-progress`.
 
 Do not yield merely because one batch or the first successful compile finished. Continue automatically while meaningful work remains and no user-decision boundary has been reached. Before ending a turn with work left, write a concrete Next action into `conversion-state.md`.
+
+## Minimum Progress Per Turn
+
+Unless a true user-decision boundary or hard environment failure stops work, each agent turn on multi-page reconstruction must make **material progress** before voluntary yield:
+
+1. Complete at least **one full planned batch** from `work/page-index.json` (dispatch → shard → merge), **or**
+2. Complete at least **one structural unit** already under edit (for example one section or one chapter file milestone), **or**
+3. Advance scaffold/identity/evidence setup through the next durable checkpoint when batches are not yet available.
+
+Do not end a turn after only status narration, re-reading state, or a single compile with no new reconstructed content when open batches remain. If the runtime budget is exhausted mid-batch, finish the current merge if possible, then record precise Next action (batch id and pages).
+
+## Compile Cadence (Scale-Aware)
+
+Compile frequency follows project scale, not a fixed per-page rule:
+
+- **Small** (roughly ≤30 pages or a one-turn repair): compile after meaningful edits as needed.
+- **Medium**: compile after each major section or chapter file update.
+- **Large** (long-document/book or many open batches): compile primarily at **chapter** (or large structural) boundaries; skip full-project compiles after every worker batch.
+- Always compile before claiming `complete` and before publication gates.
+
+Representative source-page fidelity checks are **sampled** at structural milestones, not required after every page.
 
 ## Quality Independence
 

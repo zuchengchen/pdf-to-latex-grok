@@ -1540,6 +1540,7 @@ def validate_package(skill_dir: Path, contract: dict[str, Any]) -> list[str]:
         "scripts/workflow_contract.py",
         "scripts/check_workflow_gates.sh",
         "assets/templates/main.tex",
+        "assets/templates/worker-brief.md",
     )
     for relative in required_paths:
         if not (skill_dir / relative).is_file():
@@ -1622,6 +1623,8 @@ def validate_package(skill_dir: Path, contract: dict[str, Any]) -> list[str]:
                 "spawn_subagent": "Grok spawn_subagent workers",
                 "prefer `spawn_subagent`": "prefer subagents for multi-page work",
                 "compact context packet": "minimal worker context",
+                "minimum progress per turn": "minimum progress per turn",
+                "worker-brief": "worker brief standing orders",
                 "conversion-state.md": "project state authoritative",
             }
             for marker, label in required_goal_rules.items():

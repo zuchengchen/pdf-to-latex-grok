@@ -2,6 +2,11 @@
 
 ## Unreleased
 
+- Adaptive batch planning: scanned/mixed empty text layers stay multi-page
+  batches (not automatic single-page critical); scale sizes by source kind and
+  traits; add `worker-brief.md` template.
+- Enforce minimum progress per turn and scale-aware compile cadence for
+  multi-page work.
 - Prefer spawning subagents for multi-page reconstruction with minimal
   per-worker context packets to reduce token use.
 - Prefer original PDF figure assets (extract/crop + `\includegraphics`) over

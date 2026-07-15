@@ -174,11 +174,12 @@ Do not mark source-aware completion while required content remains unowned, pend
 
 Use `resumable` or `goal-backed` execution for work that cannot reliably finish in one turn. Batch by structural boundary when possible. **Prefer spawning subagents for each planned batch** so the parent does not hold all page content.
 
-- Use roughly 5-10 pages for scanned, formula-heavy, table-heavy, or visually complex batches.
-- Use roughly 20-50 pages for mostly digital prose after page-bounded evidence exists.
-- Use one-page or one-region shards only for high-risk pages; use a bounded concurrent worker pool instead of one long-lived agent per source page or one parent-only mega-pass.
-- Use the generated plan as the default routing policy: ordinary digital prose is batched at roughly 20-50 pages, complex pages at roughly 5-10 pages, and critical or image-only pages at one page or one region. Override the batch sizes only when evidence shows that a different boundary is safer.
-- Give each worker a minimal packet (owned pages, evidence paths, digest, hashes, output path)—not the full skill, Goal, notes, or whole-project text.
+- Run `scripts/plan_batches.py` and treat its `work/page-index.json` batches as authoritative defaults.
+- Adaptive defaults (implemented in the planner): digital low-risk multi-page batches; scanned/mixed empty text layers stay **multi-page high** batches (not automatic single-page critical); critical/single-page only for true high-risk pages.
+- Approximate planner targets: digital prose often tens of pages per batch; complex/math/visual batches often ~4–12 pages; critical pages one page or one region.
+- Do not invent one worker per source page for ordinary scans—empty OCR-less text layers are expected on scanned sources.
+- Use a bounded concurrent worker pool; point workers at `assets/templates/worker-brief.md` (or `work/worker-brief.md`) plus a compact packet.
+- Give each worker a minimal packet (owned pages, evidence paths, digest, hashes, output path, brief path)—not the full skill, Goal, notes, or whole-project text.
 - Update source identity, manifest coverage, batch ownership, shard hashes, completed ranges, blockers, and the next concrete batch after each milestone.
 - Sample every structural area during review, not only early pages.
 

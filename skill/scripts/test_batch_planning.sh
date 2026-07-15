@@ -82,4 +82,40 @@ for batch in batches:
     assert not set(batch["owned_pages"]) & set(batch["context_pages"])
 PY
 
+# Scanned empty text layers must batch as multi-page high, not 1-page critical.
+scanned_pdf="$tmp_dir/scanned.pdf"
+printf '%%PDF-1.7\nPAGES=6\n' >"$scanned_pdf"
+scanned_project="$tmp_dir/scanned-project"
+mkdir -p "$scanned_project/work" "$scanned_project/logs"
+cat >"$fake_bin/pdftotext" <<'PY'
+#!/usr/bin/env python3
+import sys
+# Empty text layer for every page (typical scan without OCR).
+if "-f" in sys.argv:
+    sys.stdout.write("")
+else:
+    sys.stdout.write("\f\f\f\f\f\f")
+PY
+chmod 755 "$fake_bin/pdftotext"
+
+"$planner" "$scanned_pdf" "$scanned_project" \
+  --source-kind scanned --traits book,math-heavy >/dev/null
+
+python3 - "$scanned_project/work/page-index.json" <<'PY'
+import json
+import pathlib
+import sys
+
+index = json.loads(pathlib.Path(sys.argv[1]).read_text(encoding="utf-8"))
+pages = index["pages"]
+assert all(p["complexity"] == "high" for p in pages), pages
+assert all(p["route"] == "visual-transcription" for p in pages)
+batches = index["batches"]
+assert len(batches) < 6, batches  # must merge pages, not one batch per page
+assert max(len(b["owned_pages"]) for b in batches) > 1, batches
+assert index["policy"]["batch_sizes"]["high"] >= 4
+owned = [page for batch in batches for page in batch["owned_pages"]]
+assert owned == list(range(1, 7))
+PY
+
 printf 'Batch planning tests passed.\n'
