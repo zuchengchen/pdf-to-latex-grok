@@ -2,6 +2,8 @@
 
 ## Unreleased
 
+- Prefer original PDF figure assets (extract/crop + `\includegraphics`) over
+  TikZ or other LaTeX redraws by default.
 - Make continuity auto-start: never block on Goal startup; use `resumable` by
   default when no matching Goal is active; keep delivery quality independent
   of Goal; optional `/goal` pin is non-blocking.

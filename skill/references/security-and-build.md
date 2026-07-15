@@ -41,7 +41,7 @@ Python 3.10+   contract, state, identity, manifests, and transactional evidence
 Bash 3.2+      thin helper entry points
 XeLaTeX        compilation
 latexmk        required for publication-polish builds
-Poppler        pdfinfo, pdftoppm, and pdftotext capabilities
+Poppler        pdfinfo, pdftoppm, pdftotext, and optional pdfimages for figure extract
 ```
 
 Probe capabilities explicitly and report what is unavailable:

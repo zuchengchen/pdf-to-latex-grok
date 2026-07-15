@@ -19,7 +19,7 @@ Use this reference for source-aware inspection, evidence planning, source identi
 
 1. Confirm the PDF and target paths. Inspect an existing target before creating or replacing anything.
 2. Set `SKILL_DIR` to the directory containing `SKILL.md` before invoking helpers.
-3. Check available capabilities such as `pdfinfo`, `pdftoppm` or `mutool`, `pdftotext`, and XeLaTeX. Do not invoke OCR.
+3. Check available capabilities such as `pdfinfo`, `pdftoppm` or `mutool`, `pdftotext`, optional `pdfimages` for figure extract, and XeLaTeX. Do not invoke OCR.
 4. Read metadata and page count when possible. Record page size, orientation, encryption, and mixed-size evidence.
 5. Sample the digital text layer and representative rendered pages. Include the first page, an early body page, a middle page, the final page, and visible formula-, table-, appendix-, or reference-heavy pages.
 6. Set `Source kind`, applicable `Document traits`, `Delivery level`, `Execution mode`, and `Verification scope` using `workflow-contract.json`.
@@ -132,7 +132,7 @@ Determine logical reading order before final LaTeX:
 
 Usually omit repeated navigation furniture from semantic body text. Preserve marginal or decorative content only when it conveys meaning.
 
-For figures, identify whether each object is a genuine extractable asset, crop, semantic recreation, or blocker. Rebuild legible tables as LaTeX tables. Read formulas visually and route systematic math work through `math-polish.md`.
+For figures, prefer genuine extractable assets from the source PDF (embedded image extract, then tight crop). Classify each object as: embedded extract, crop, blocker, or—only as last resort—semantic recreation. Do not plan TikZ/LaTeX redraws of source figures by default. Rebuild legible **tables** as LaTeX tables (data, not pictorial figures). Read formulas visually and route systematic math work through `math-polish.md`.
 
 ## Route Map
 

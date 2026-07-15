@@ -65,7 +65,8 @@ The first compiling PDF is a checkpoint. Do not deliver it as clean semantic or 
 - Replace visual formatting hacks with semantic environments.
 - Restore tables, figures, captions, labels, units, notes, and cross-references.
 - Fix missing assets and project-relative paths.
-- Keep genuine visual assets; replace legible text or table screenshots with semantic source.
+- Keep genuine visual assets extracted from the source PDF; do not replace source figures with TikZ or other LaTeX redraws during polish.
+- Replace legible text or data-table screenshots with semantic source; leave pictorial figures as image assets.
 
 ### Math
 

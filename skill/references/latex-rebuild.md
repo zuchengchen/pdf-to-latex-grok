@@ -22,11 +22,22 @@ Use this reference to turn analyzed PDF evidence into maintainable XeLaTeX. Reco
 - Treat page boundaries as evidence boundaries, not normal source-file boundaries.
 - Remove running headers, footers, repeated page numbers, and extraction artifacts from body content.
 - Use rendered pages to correct digital extraction and to transcribe scanned or damaged regions.
-- Keep genuine figures as local assets; rebuild legible text, math, and tables as editable source.
+- Keep genuine figures as local image assets extracted from the source PDF; rebuild legible text, math, and tables as editable source.
 - Prefer source page size and broad hierarchy when practical, but do not chase pixel identity.
 - Label inference, approximation, public metadata, and unresolved source content.
 
 Do not embed ordinary full pages to make a conversion appear complete. A full-page image is appropriate only when the source object itself is a plate, poster, illustration, or similar indivisible visual.
+
+### Figure Policy (Default)
+
+**Prefer original PDF visuals over LaTeX redraws.**
+
+1. Extract embedded images from the source PDF when possible (`pdfimages`, `mutool extract`, or equivalent).
+2. Otherwise crop the figure region from a high-resolution page render (`pdftoppm` / `mutool`) into `figures/`.
+3. Include assets with `\includegraphics` (or similar) under project-relative paths.
+4. **Do not** redraw source figures, photos, plots, schematics, or diagrams in TikZ, PGFPlots, `picture`, Asymptote, or hand-coded vector LaTeX by default.
+5. Semantic redraw is allowed only when the user explicitly requests it, or when no usable raster/vector asset can be obtained and a simple, faithful recreation is clearly better than a blank or blocker—and only after recording that approximation.
+6. Never invent visual data. Never replace a complex figure with a simplified TikZ sketch “for neatness.”
 
 ## Project Shape
 
@@ -103,16 +114,17 @@ Resolve class, package, font, Unicode, path, and toolchain failures before broad
 
 Before drafting chapters around missing objects, locate and classify assets:
 
-- project-local image or font asset;
-- cropped genuine figure;
-- semantic diagram or plot recreation;
-- semantic table;
+- embedded image extracted from the source PDF (preferred for figures);
+- project-local image or font asset already in the target tree;
+- cropped genuine figure region from a page render (fallback when embedded extract fails);
+- semantic table (text/data tables, not pictorial figures);
 - formula reconstruction;
 - bibliography or metadata source;
 - unreadable or unavailable blocker;
-- allowed omission with reason.
+- allowed omission with reason;
+- semantic diagram or plot recreation (**last resort only**, with explicit reason).
 
-Record source page, target file, ownership, status, and derivation. Prefer extracting the actual figure region over taking a screenshot of surrounding text. Recreate simple diagrams semantically only when it is clearer and faithful; do not invent visual data.
+Record source page, target file, ownership, status, and derivation. Prefer native embedded extraction, then tight crops of the figure object; avoid screenshots that include surrounding body text, captions already typeset in LaTeX, or page furniture. Do not default to TikZ or other LaTeX redraws.
 
 Publication work requires project-specific inputs to be localized inside the project. System TeX packages and system fonts may remain environmental dependencies and should be recorded.
 
@@ -128,10 +140,14 @@ Publication work requires project-specific inputs to be localized inside the pro
 
 ### Figures
 
-- Store assets under project-relative paths.
-- Preserve captions, labels, credits, and in-text references.
-- Crop to the actual source object and verify readability.
-- Use stable sizing such as `\linewidth`; avoid brittle coordinates.
+- Default path: extract original graphics from the source PDF → store under `figures/` → `\includegraphics`.
+- Prefer `pdfimages -all` (or `mutool extract`) for embedded bitmaps/vectors; fall back to a cropped high-DPI page render of that figure only.
+- Store assets under project-relative paths; do not use absolute image paths in final source.
+- Preserve captions, labels, credits, and in-text references as LaTeX text (not burned into the image when the caption is separate body text).
+- Crop to the actual source object and verify readability against the source page.
+- Use stable sizing such as `\linewidth` or a fixed fraction of it; avoid brittle absolute coordinates.
+- Do not rebuild photos, scanned plates, plotted curves, circuit drawings, or book illustrations as TikZ/PGFPlots unless the user asked for editable vector redraws.
+- If extraction yields multiple candidates, pick the asset that matches the figure’s visual content; record the mapping in `object-inventory.md`.
 
 ### Tables
 

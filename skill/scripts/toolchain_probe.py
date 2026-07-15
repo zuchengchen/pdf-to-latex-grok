@@ -18,6 +18,7 @@ TOOLS = (
     "pdftoppm",
     "mutool",
     "pdftotext",
+    "pdfimages",
     "pdfseparate",
     "biber",
     "bibtex",
