@@ -95,11 +95,11 @@ Read-only `review` operations compile and render only in temporary copies and do
 not update the user's project.
 
 Prefer auto-start **run-to-completion**: never block on Goal startup, and never
-pause mid-pipeline waiting for the user to say 继续 / continue. A single
-`/pdf-to-latex …` request should drive full conversions, broad resume or
+pause mid-pipeline waiting for the user to say 继续 / 是否继续 / continue. A
+single `/pdf-to-latex …` request should drive full conversions, broad resume or
 refinement, publication-scale work, and multi-batch tasks through all planned
 batches, integration, gates, and a terminal outcome in one continuous session
-when the host allows. When a matching Goal is already active, continue it with
+when the host allows—without “batch then ask” handoffs. When a matching Goal is already active, continue it with
 `update_goal`; otherwise use `resumable` by default at the same delivery
 quality. Project files such as `conversion-state.md` remain the durable progress
 record for forced mid-run stops and later resume. Optional `/goal` pinning is

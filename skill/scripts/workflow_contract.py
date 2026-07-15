@@ -1591,6 +1591,15 @@ def validate_package(skill_dir: Path, contract: dict[str, Any]) -> list[str]:
                 errors.append(
                     "SKILL.md must use resumable by default when Goal is not already active."
                 )
+            skill_lower = skill_text.lower()
+            if "run-to-completion" not in skill_lower:
+                errors.append("SKILL.md must declare run-to-completion as the hard default.")
+            if "never ask the user whether to continue" not in skill_lower:
+                errors.append(
+                    "SKILL.md must forbid asking the user whether to continue ordinary reconstruction."
+                )
+            if "是否继续" not in skill_text:
+                errors.append("SKILL.md must explicitly ban 是否继续 continue-prompts.")
             if SELF_UPDATE_SCRIPT not in skill_text:
                 errors.append(f"SKILL.md must reference {SELF_UPDATE_SCRIPT}.")
             if SELF_UPDATE_COMMAND not in skill_text:
@@ -1625,6 +1634,7 @@ def validate_package(skill_dir: Path, contract: dict[str, Any]) -> list[str]:
                 "compact context packet": "minimal worker context",
                 "run until complete": "run-to-completion default",
                 "never ask the user to type": "no continue/继续 prompts",
+                "是否继续": "explicit ban on 是否继续 prompts",
                 "worker-brief": "worker brief standing orders",
                 "conversion-state.md": "project state authoritative",
             }

@@ -2,6 +2,9 @@
 
 ## Unreleased
 
+- Front-load a non-negotiable hard continuity rule: full convert/resume/refine
+  runs to terminal outcome in one session; ban 是否继续 / 要不要继续 / Shall I
+  continue? mid-pipeline prompts (package validation enforces the markers).
 - Default to run-to-completion for convert/resume/refine: finish all planned
   batches, integration, refinement, and gates in one continuous session; forbid
   voluntary yield that waits for 继续 / continue between batches.

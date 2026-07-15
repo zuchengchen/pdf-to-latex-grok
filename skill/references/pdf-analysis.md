@@ -172,7 +172,7 @@ Do not mark source-aware completion while required content remains unowned, pend
 
 ## Long Documents
 
-Use `resumable` or `goal-backed` execution for multi-page reconstruction so durable state can resume after a forced host stop. Still **run to completion in the current session** when possible: do not plan a multi-turn human loop of “one batch then wait for 继续.” Batch by structural boundary when possible. **Prefer spawning subagents for planned batches** (bounded concurrent pool) so the parent does not hold all page content.
+Use `resumable` or `goal-backed` execution for multi-page reconstruction so durable state can resume after a forced host stop. Still **run to completion in the current session** when possible: do not plan a multi-turn human loop of “one batch then wait for 继续 / 是否继续.” Never stop after partial page coverage to ask whether to keep converting. Batch by structural boundary when possible. **Prefer spawning subagents for planned batches** (bounded concurrent pool) so the parent does not hold all page content.
 
 - Run `scripts/plan_batches.py` and treat its `work/page-index.json` batches as authoritative defaults.
 - Adaptive defaults (implemented in the planner): digital low-risk multi-page batches; scanned/mixed empty text layers stay **multi-page high** batches (not automatic single-page critical); critical/single-page only for true high-risk pages.

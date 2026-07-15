@@ -6,11 +6,11 @@ On Grok, agent tools cannot create a Goal. `update_goal` reports progress only w
 
 ## Auto-Start Rule (Hard)
 
-Prefer auto-start **run-to-completion**: when the user issues a complete `/pdf-to-latex` (or equivalent) task request, begin reconstruction immediately and keep going until a terminal outcome.
+Prefer auto-start **run-to-completion**: when the user issues a complete `/pdf-to-latex` (or equivalent) task request, begin reconstruction immediately and keep going until a terminal outcome. One request means one continuous pipeline through all pages and gates—not a multi-turn “batch → ask → 继续” chat loop.
 
-**Never block on Goal startup.** Do not pause, yield, or wait for the user to run `/goal` before scaffolding, evidence, workers, compilation, or the next checkpoint. Do not treat a long `/goal` objective template as the default next user action. Do not pause for the user to say 继续 / continue between batches or stages.
+**Never block on Goal startup.** Do not pause, yield, or wait for the user to run `/goal` before scaffolding, evidence, workers, compilation, or the next checkpoint. Do not treat a long `/goal` objective template as the default next user action. Do not pause for the user to say 继续 / continue / 是否继续 / 要不要继续 between batches or stages.
 
-Do not ask for separate Goal confirmation.
+Do not ask for separate Goal confirmation. Do not ask “是否继续转录” or “Shall I continue converting?” after partial progress.
 
 ## Mode Selection
 
@@ -98,7 +98,7 @@ Keep child responses short and durable. The parent should record only batch IDs,
 
 **Run until complete (hard default).** One user convert/resume/refine request means finish the whole pipeline in that session when the host allows: triage → scaffold → evidence → all planned batches → merge/integration → refinement → required gates → terminal outcome. Do not treat batch boundaries, chapter boundaries, or the first successful compile as natural places to stop and wait for the user.
 
-**Never ask the user to type 继续, continue, next, or equivalent just to proceed.** Those are not valid stop reasons. Do not end a turn with “say continue to proceed,” a partial progress dump, or only the next batch id while open work remains and no true boundary has been reached.
+**Never ask the user to type 继续, continue, next, 是否继续, 要不要继续, or equivalent just to proceed.** Those are not valid stop reasons. Do not end a turn with “say continue to proceed,” “是否继续？”, a partial progress dump, or only the next batch id while open work remains and no true boundary has been reached.
 
 On every continuation (same session, resume request, or active Goal), and while outcome remains `in-progress` in the initial session:
 

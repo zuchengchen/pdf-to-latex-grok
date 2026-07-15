@@ -300,6 +300,29 @@ expect_status 1 "$validator" validate-package "$missing_goal_policy_skill"
 grep -Fq 'SKILL.md must reference references/goal-mode.md' "$tmp_dir/last.stderr" || fail 'package validation accepted a missing Goal reference route'
 grep -Fq 'SKILL.md must never block on Goal startup' "$tmp_dir/last.stderr" || fail 'package validation accepted a missing never-block-on-Goal policy'
 
+missing_run_to_completion_skill="$tmp_dir/missing-run-to-completion-skill"
+cp -R "$script_dir/.." "$missing_run_to_completion_skill"
+python3 - "$missing_run_to_completion_skill/SKILL.md" <<'PY'
+import pathlib
+import re
+import sys
+
+path = pathlib.Path(sys.argv[1])
+text = path.read_text(encoding="utf-8")
+text = re.sub(r"run-to-completion", "run-in-stages", text, flags=re.IGNORECASE)
+text = text.replace("Never ask the user whether to continue", "Optionally ask the user whether to continue")
+text = text.replace(
+    "never ask the user whether to continue",
+    "optionally ask the user whether to continue",
+)
+text = text.replace("是否继续", "optional-continue-token")
+path.write_text(text, encoding="utf-8")
+PY
+expect_status 1 "$validator" validate-package "$missing_run_to_completion_skill"
+grep -Fq 'SKILL.md must declare run-to-completion as the hard default' "$tmp_dir/last.stderr" || fail 'package validation accepted missing run-to-completion default'
+grep -Fq 'SKILL.md must forbid asking the user whether to continue ordinary reconstruction' "$tmp_dir/last.stderr" || fail 'package validation accepted continue-prompt permission'
+grep -Fq 'SKILL.md must explicitly ban 是否继续 continue-prompts' "$tmp_dir/last.stderr" || fail 'package validation accepted missing 是否继续 ban'
+
 missing_slash_command_skill="$tmp_dir/missing-slash-command-skill"
 cp -R "$script_dir/.." "$missing_slash_command_skill"
 python3 - "$missing_slash_command_skill/SKILL.md" <<'PY'
