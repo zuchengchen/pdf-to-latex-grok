@@ -368,8 +368,22 @@ import sys
 
 path = pathlib.Path(sys.argv[1])
 text = path.read_text(encoding="utf-8")
-text = text.replace("update skill pdf-to-latex", "refresh the installed package")
-text = text.replace("更新 skill pdf-to-latex", "刷新已安装包")
+text = text.replace(
+    "update skill https://github.com/zuchengchen/pdf-to-latex-grok.git",
+    "refresh the installed package",
+)
+text = text.replace(
+    "更新skill https://github.com/zuchengchen/pdf-to-latex-grok.git",
+    "刷新已安装包",
+)
+text = text.replace(
+    "install skill https://github.com/zuchengchen/pdf-to-latex-grok.git",
+    "bootstrap the package",
+)
+text = text.replace(
+    "安装skill https://github.com/zuchengchen/pdf-to-latex-grok.git",
+    "引导安装包",
+)
 text = text.replace("scripts/update_installed_skill.sh", "scripts/check_environment.sh")
 text = text.replace(
     "Only enter this route when the trimmed request matches exactly",
@@ -378,8 +392,10 @@ text = text.replace(
 path.write_text(text, encoding="utf-8")
 PY
 expect_status 1 "$validator" validate-package "$missing_self_update_route_skill"
-grep -Fq 'description must advertise the update skill pdf-to-latex trigger' "$tmp_dir/last.stderr" || fail 'package validation accepted a missing English self-update trigger'
-grep -Fq 'description must advertise the 更新 skill pdf-to-latex trigger' "$tmp_dir/last.stderr" || fail 'package validation accepted a missing Chinese self-update trigger'
+grep -Fq 'description must advertise the update skill https://github.com/zuchengchen/pdf-to-latex-grok.git trigger' "$tmp_dir/last.stderr" || fail 'package validation accepted a missing English self-update trigger'
+grep -Fq 'description must advertise the 更新skill https://github.com/zuchengchen/pdf-to-latex-grok.git trigger' "$tmp_dir/last.stderr" || fail 'package validation accepted a missing Chinese self-update trigger'
+grep -Fq 'description must advertise the install skill https://github.com/zuchengchen/pdf-to-latex-grok.git trigger' "$tmp_dir/last.stderr" || fail 'package validation accepted a missing English install trigger'
+grep -Fq 'description must advertise the 安装skill https://github.com/zuchengchen/pdf-to-latex-grok.git trigger' "$tmp_dir/last.stderr" || fail 'package validation accepted a missing Chinese install trigger'
 grep -Fq 'SKILL.md must reference scripts/update_installed_skill.sh' "$tmp_dir/last.stderr" || fail 'package validation accepted a missing self-update route'
 grep -Fq 'SKILL.md must invoke the self-updater through Bash' "$tmp_dir/last.stderr" || fail 'package validation accepted a non-portable self-update invocation'
 grep -Fq 'SKILL.md must restrict self-update to exact command forms' "$tmp_dir/last.stderr" || fail 'package validation accepted broad self-update routing'

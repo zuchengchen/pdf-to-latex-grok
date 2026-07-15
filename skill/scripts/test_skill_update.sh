@@ -99,7 +99,7 @@ import sys
 record = json.loads(pathlib.Path(sys.argv[1]).read_text(encoding="utf-8"))
 expected_ref = sys.argv[2]
 skills = pathlib.Path(sys.argv[3]).resolve()
-assert record["url"] == "https://github.com/zuchengchen/pdf-to-latex"
+assert record["url"] == "https://github.com/zuchengchen/pdf-to-latex-grok"
 assert record["path"] == "skill"
 assert record["ref"] == expected_ref
 assert record["name"] == "pdf-to-latex"

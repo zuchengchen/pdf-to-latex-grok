@@ -1,13 +1,86 @@
 # Installation
 
 The installable Grok skill is the repository's `skill/` directory. Do not
-install the repository root.
+install the repository root as the skill root.
+
+Canonical repository:
+
+```text
+https://github.com/zuchengchen/pdf-to-latex-grok.git
+```
 
 Destination: `${GROK_HOME:-$HOME/.grok}/skills/pdf-to-latex`.
 
-## Stable Grok Install
+## Install In Grok
+
+Type one of:
+
+```text
+安装skill https://github.com/zuchengchen/pdf-to-latex-grok.git
+安装 skill https://github.com/zuchengchen/pdf-to-latex-grok.git
+install skill https://github.com/zuchengchen/pdf-to-latex-grok.git
+```
+
+Grok should:
+
+1. Clone the repository (default branch `main`, or a named ref).
+2. Run `skill/scripts/update_installed_skill.sh --url https://github.com/zuchengchen/pdf-to-latex-grok.git`.
+3. Confirm the package lands at `${GROK_HOME:-$HOME/.grok}/skills/pdf-to-latex`.
+4. Tell the user to start a new session if the skill list does not refresh.
+
+Optional ref:
+
+```text
+安装skill https://github.com/zuchengchen/pdf-to-latex-grok.git 到 v1.0.0
+```
+
+## Update In Grok
+
+```text
+更新skill https://github.com/zuchengchen/pdf-to-latex-grok.git
+更新 skill https://github.com/zuchengchen/pdf-to-latex-grok.git
+update skill https://github.com/zuchengchen/pdf-to-latex-grok.git
+```
+
+Optional ref:
+
+```text
+更新skill https://github.com/zuchengchen/pdf-to-latex-grok.git 到 main
+```
+
+When the skill is already installed, Grok should run the bundled updater from
+the installed copy with the same URL (and optional `--ref`).
+
+Direct command:
+
+```bash
+skill_dir="${GROK_HOME:-$HOME/.grok}/skills/pdf-to-latex"
+bash "$skill_dir/scripts/update_installed_skill.sh" \
+  --url https://github.com/zuchengchen/pdf-to-latex-grok.git \
+  --ref main
+```
+
+The updater downloads the repository `skill/` tree, writes into same-filesystem
+staging, restores executable bits, runs one package validation, and swaps
+directories by rename with rollback.
+
+## Shell Bootstrap (No Prior Install)
 
 Prerequisites: Git, Python 3.10+, Bash 3.2+.
+
+```bash
+set -euo pipefail
+tmp_dir=$(mktemp -d)
+git clone --depth 1 https://github.com/zuchengchen/pdf-to-latex-grok.git "$tmp_dir/repo"
+bash "$tmp_dir/repo/skill/scripts/update_installed_skill.sh" \
+  --url https://github.com/zuchengchen/pdf-to-latex-grok.git
+rm -rf "$tmp_dir"
+```
+
+## Atomic Manual Install
+
+This procedure validates a staged copy before placing it at the final path. It
+never overwrites an existing installation.
 
 ```bash
 set -euo pipefail
@@ -15,7 +88,7 @@ set -euo pipefail
 grok_home=${GROK_HOME:-$HOME/.grok}
 skills_dir="$grok_home/skills"
 skill_dir="$skills_dir/pdf-to-latex"
-ref=v1.0.0
+ref=main
 tmp_dir=$(mktemp -d)
 staging=
 lock_dir="$skills_dir/.pdf-to-latex.install.lock"
@@ -60,7 +133,7 @@ if [[ -e "$skill_dir" || -L "$skill_dir" ]]; then
 fi
 staging=$(mktemp -d "$skills_dir/.pdf-to-latex.staging.XXXXXX")
 git clone --depth 1 --branch "$ref" \
-  https://github.com/zuchengchen/pdf-to-latex \
+  https://github.com/zuchengchen/pdf-to-latex-grok.git \
   "$tmp_dir/repository"
 
 source_skill="$tmp_dir/repository/skill"
@@ -73,48 +146,7 @@ mv "$staging" "$skill_dir"
 staging=
 ```
 
-Start a new Grok session after installation. Skills often auto-reload when files
-change on disk.
-
-## Fast Grok Update
-
-After installing a version that contains `scripts/update_installed_skill.sh`,
-the normal update command is:
-
-```text
-更新 skill pdf-to-latex
-```
-
-The skill routes this exact command to its bundled updater instead of the
-conversion workflow or the conservative atomic procedure below. The bare
-command updates from the development branch `main`; use
-`更新 skill pdf-to-latex 到 REF` for a tag, branch, or commit.
-
-The fast path downloads the repository `skill/` tree (Git clone or archive),
-writes into same-filesystem staging under
-`${GROK_HOME:-$HOME/.grok}/skills`, restores executable bits, runs exactly one
-bundled package validation, and swaps directories by rename with rollback. It
-does not run `bash -n`, portable, integration, or extended tests. Those checks
-belong in repository CI and release validation.
-
-The equivalent direct command from an existing installed copy is:
-
-```bash
-skill_dir="${GROK_HOME:-$HOME/.grok}/skills/pdf-to-latex"
-bash "$skill_dir/scripts/update_installed_skill.sh" --ref main
-```
-
-An older installation that does not contain the updater must use Atomic Update
-once. Start a new Grok session after the fast update if the skill list remains
-stale.
-
 ## Atomic Update
-
-The update uses unique same-filesystem staging and rollback directories. It
-attempts to restore the old installation after any failure or interruption
-before final package validation succeeds. A successful update or restoration
-removes the rollback immediately. If restoration itself fails, cleanup retains
-the rollback path and prints it for manual recovery.
 
 ```bash
 set -euo pipefail
@@ -122,7 +154,7 @@ set -euo pipefail
 grok_home=${GROK_HOME:-$HOME/.grok}
 skills_dir="$grok_home/skills"
 skill_dir="$skills_dir/pdf-to-latex"
-ref=v1.0.0
+ref=main
 tmp_dir=$(mktemp -d)
 staging=
 rollback_root=
@@ -194,7 +226,7 @@ rollback_root=$(mktemp -d "$skills_dir/.pdf-to-latex.rollback.XXXXXX")
 rollback="$rollback_root/installed"
 
 git clone --depth 1 --branch "$ref" \
-  https://github.com/zuchengchen/pdf-to-latex \
+  https://github.com/zuchengchen/pdf-to-latex-grok.git \
   "$tmp_dir/repository"
 
 source_skill="$tmp_dir/repository/skill"
@@ -213,16 +245,7 @@ rm -rf "$rollback_root"
 rollback_active=false
 ```
 
-Start a new Grok session after updating if needed.
-
-## Development Channel
-
-To test unreleased changes, replace `v1.0.0` with `main`. Development installs
-are not the stable channel and may contain contract changes.
-
 ## Verify Installation
-
-Run the installed package validator:
 
 ```bash
 skill_dir="${GROK_HOME:-$HOME/.grok}/skills/pdf-to-latex"
@@ -242,21 +265,16 @@ appears. A direct invocation is:
 rm -rf "${GROK_HOME:-$HOME/.grok}/skills/pdf-to-latex"
 ```
 
-Start a new Grok session after uninstalling if the skill list remains stale.
-
 ## Troubleshooting
 
-- Pass `skill/` as the installable path; the repository root does not contain
-  the installable `SKILL.md`.
-- If the destination exists, use the atomic update procedure instead of
-  overwriting it in place.
+- Install and update commands must use
+  `https://github.com/zuchengchen/pdf-to-latex-grok.git` (a trailing `.git` is
+  optional for the helper script).
+- The installable package is the repository `skill/` directory, not the repo root.
 - Manual install and update reject a symlink destination and serialize through
-  `.pdf-to-latex.install.lock`. Remove that directory only after confirming no
-  install or update process is still running.
+  `.pdf-to-latex.install.lock`.
 - If an update reports that restoration failed, keep the printed
   `.pdf-to-latex.rollback.*` directory until its `installed/` copy has been
   restored or inspected manually.
-- If archive download is rate-limited, the manual Git procedure remains safe
-  because it validates staging before moving the installed directory.
 - Python 3.10+ is required by deterministic workflow helpers.
 - Override the install root with `GROK_HOME` when testing in a temporary tree.

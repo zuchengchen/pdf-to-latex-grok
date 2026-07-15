@@ -40,8 +40,11 @@ SELF_UPDATE_COMMAND = 'bash "$SKILL_DIR/scripts/update_installed_skill.sh"'
 SELF_UPDATE_EXACT_ROUTE_MARKER = (
     "only enter this route when the trimmed request matches exactly"
 )
-SELF_UPDATE_TRIGGER = "update skill pdf-to-latex"
-SELF_UPDATE_TRIGGER_ZH = "更新 skill pdf-to-latex"
+CANONICAL_SKILL_REPO = "https://github.com/zuchengchen/pdf-to-latex-grok.git"
+SELF_UPDATE_TRIGGER = f"update skill {CANONICAL_SKILL_REPO}"
+SELF_UPDATE_TRIGGER_ZH = f"更新skill {CANONICAL_SKILL_REPO}"
+SELF_INSTALL_TRIGGER = f"install skill {CANONICAL_SKILL_REPO}"
+SELF_INSTALL_TRIGGER_ZH = f"安装skill {CANONICAL_SKILL_REPO}"
 RESOURCE_RE = re.compile(
     r"(?<![A-Za-z0-9_.-])((?:references|scripts|assets)/[A-Za-z0-9_.-]+(?:/[A-Za-z0-9_.-]+)*)"
 )
@@ -1552,13 +1555,22 @@ def validate_package(skill_dir: Path, contract: dict[str, Any]) -> list[str]:
         )
         errors.extend(frontmatter_errors)
         description = skill_metadata.get("description", "")
-        if SELF_UPDATE_TRIGGER not in description.lower():
+        description_lower = description.lower()
+        if SELF_UPDATE_TRIGGER not in description_lower:
             errors.append(
-                "SKILL.md description must advertise the update skill pdf-to-latex trigger."
+                f"SKILL.md description must advertise the {SELF_UPDATE_TRIGGER} trigger."
             )
         if SELF_UPDATE_TRIGGER_ZH not in description:
             errors.append(
-                "SKILL.md description must advertise the 更新 skill pdf-to-latex trigger."
+                f"SKILL.md description must advertise the {SELF_UPDATE_TRIGGER_ZH} trigger."
+            )
+        if SELF_INSTALL_TRIGGER not in description_lower:
+            errors.append(
+                f"SKILL.md description must advertise the {SELF_INSTALL_TRIGGER} trigger."
+            )
+        if SELF_INSTALL_TRIGGER_ZH not in description:
+            errors.append(
+                f"SKILL.md description must advertise the {SELF_INSTALL_TRIGGER_ZH} trigger."
             )
         if "/pdf-to-latex" not in description:
             errors.append("SKILL.md description must advertise the /pdf-to-latex slash command.")

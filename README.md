@@ -12,47 +12,67 @@ the skill's scope.
 The installable skill is [`skill/`](skill/). The repository root contains
 publishing, installation, and development material and is not itself a skill.
 
-## Stable Install
+## Install In Grok
 
-Install the repository's `skill/` directory into the Grok user skill path:
-
-```bash
-mkdir -p "${GROK_HOME:-$HOME/.grok}/skills"
-git clone --depth 1 --branch v1.0.0 \
-  https://github.com/zuchengchen/pdf-to-latex \
-  /tmp/pdf-to-latex-src
-cp -R /tmp/pdf-to-latex-src/skill \
-  "${GROK_HOME:-$HOME/.grok}/skills/pdf-to-latex"
-python3 "${GROK_HOME:-$HOME/.grok}/skills/pdf-to-latex/scripts/workflow_contract.py" \
-  validate-package "${GROK_HOME:-$HOME/.grok}/skills/pdf-to-latex"
-```
-
-Or run the bundled updater for a fresh install into `~/.grok/skills/pdf-to-latex`
-when you already have a copy of the updater script. See [INSTALL.md](INSTALL.md)
-for atomic manual installation, update, verification, and uninstall procedures.
-
-Start a new Grok session after installation (skills often auto-reload when files
-change on disk).
-
-## Fast Self-Update
-
-After installing a version that contains the bundled updater, update the skill
-from inside Grok with:
+In Grok, install with:
 
 ```text
-更新 skill pdf-to-latex
+安装skill https://github.com/zuchengchen/pdf-to-latex-grok.git
 ```
 
-The bare command updates from the development branch `main`, downloads into
-same-filesystem staging under `${GROK_HOME:-$HOME/.grok}/skills`, repairs
-executable bits, runs one package validation, and swaps directories by rename
-with rollback. It does not run the portable or integration suites during an
-ordinary fast update. Start a new Grok session after it completes if the skill
-list remains stale.
+Equivalent forms:
 
-Use `更新 skill pdf-to-latex 到 REF` to select a tag, branch, or commit. An
-installation older than the bundled updater needs one update through the manual
-path before this command becomes available.
+```text
+安装 skill https://github.com/zuchengchen/pdf-to-latex-grok.git
+install skill https://github.com/zuchengchen/pdf-to-latex-grok.git
+```
+
+Grok should clone this repository, run
+`skill/scripts/update_installed_skill.sh`, and place the package at
+`${GROK_HOME:-$HOME/.grok}/skills/pdf-to-latex`. Start a new Grok session after
+installation if the skill list remains stale (skills often auto-reload).
+
+Optional tag, branch, or commit:
+
+```text
+安装skill https://github.com/zuchengchen/pdf-to-latex-grok.git 到 v1.0.0
+```
+
+Shell equivalent (fresh machine):
+
+```bash
+tmp_dir=$(mktemp -d)
+git clone --depth 1 https://github.com/zuchengchen/pdf-to-latex-grok.git "$tmp_dir/repo"
+bash "$tmp_dir/repo/skill/scripts/update_installed_skill.sh" \
+  --url https://github.com/zuchengchen/pdf-to-latex-grok.git
+rm -rf "$tmp_dir"
+```
+
+See [INSTALL.md](INSTALL.md) for atomic manual procedures, verification, and
+uninstall.
+
+## Update In Grok
+
+```text
+更新skill https://github.com/zuchengchen/pdf-to-latex-grok.git
+```
+
+Equivalent forms:
+
+```text
+更新 skill https://github.com/zuchengchen/pdf-to-latex-grok.git
+update skill https://github.com/zuchengchen/pdf-to-latex-grok.git
+```
+
+Optional ref:
+
+```text
+更新skill https://github.com/zuchengchen/pdf-to-latex-grok.git 到 main
+```
+
+The bare update defaults to branch `main`. It downloads into same-filesystem
+staging under `${GROK_HOME:-$HOME/.grok}/skills`, repairs executable bits, runs
+one package validation, and swaps directories by rename with rollback.
 
 ## Workflow Model
 
@@ -130,8 +150,7 @@ evidence.
 ## Repository Structure
 
 ```text
-pdf-to-latex/
-├── .github/workflows/validate.yml
+pdf-to-latex-grok/
 ├── CHANGELOG.md
 ├── INSTALL.md
 ├── LICENSE
@@ -140,21 +159,9 @@ pdf-to-latex/
 └── skill/
     ├── SKILL.md
     ├── assets/templates/
-    ├── assets/schemas/page-ir.schema.json
-    ├── assets/schemas/page-complexity-index.schema.json
+    ├── assets/schemas/
     ├── references/
-    │   ├── goal-mode.md
-    │   ├── workflow-contract.json
-    │   ├── security-and-build.md
-    │   ├── pdf-analysis.md
-    │   ├── latex-rebuild.md
-    │   ├── refinement-and-review.md
-    │   ├── book-production.md
-    │   └── math-polish.md
     └── scripts/
-        ├── merge_shards.py
-        ├── plan_batches.py
-        └── report_worker_usage.py
 ```
 
 ## Development Validation
@@ -176,10 +183,6 @@ Package validation:
 ```bash
 python3 skill/scripts/workflow_contract.py validate-package skill
 ```
-
-CI runs portable validation and a real XeLaTeX/Poppler integration job for every
-pull request. Longer bibliography, index, glossary, CJK, book, and forward-test
-corpora run on scheduled or release validation.
 
 ## Usage Examples
 
@@ -204,9 +207,7 @@ corpora run on scheduled or release validation.
 Tagged releases such as `v1.0.0` are the stable installation channel. The
 `main` branch is the development channel and may contain unreleased contract or
 workflow changes. Workflow contract and state schema versions are recorded
-separately inside `skill/references/workflow-contract.json`. Version-tag pushes
-run the extended release corpus before the corresponding GitHub Release is
-published.
+separately inside `skill/references/workflow-contract.json`.
 
 ## License
 

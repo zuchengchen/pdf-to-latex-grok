@@ -2,6 +2,11 @@
 
 ## Unreleased
 
+- Make Grok install/update URL-based:
+  `安装skill https://github.com/zuchengchen/pdf-to-latex-grok.git` and
+  `更新skill https://github.com/zuchengchen/pdf-to-latex-grok.git`.
+- Point the bundled installer default source at
+  `https://github.com/zuchengchen/pdf-to-latex-grok` and accept `--url`.
 - Port the skill packaging, install path, docs, Goal runtime, and updater to
   Grok only (`~/.grok/skills`, `/pdf-to-latex`, `update_goal`, `spawn_subagent`).
 - Remove Codex-only surfaces (`agents/openai.yaml`, `$pdf-to-latex`,
@@ -10,8 +15,6 @@
   publication-scale writable work without a separate confirmation prompt.
 - Add a concise Goal startup, continuation, completion, and resumable-fallback
   protocol while keeping project state authoritative.
-- Add a fast self-update trigger and rollback-capable updater for requests such
-  as `update skill pdf-to-latex`.
 
 ## 1.0.0 - 2026-07-10
 

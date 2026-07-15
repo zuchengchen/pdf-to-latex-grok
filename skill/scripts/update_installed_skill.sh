@@ -1,9 +1,24 @@
 #!/usr/bin/env bash
 set -euo pipefail
 
+DEFAULT_REPO_URL='https://github.com/zuchengchen/pdf-to-latex-grok'
+DEFAULT_REPO_PATH='skill'
+
 usage() {
-  printf 'Usage: %s [--ref REF]\n' "$0" >&2
-  printf 'Fast-install or update pdf-to-latex from GitHub into ~/.grok/skills; REF defaults to development branch main.\n' >&2
+  printf 'Usage: %s [--ref REF] [--url REPO_URL]\n' "$0" >&2
+  printf 'Install or update pdf-to-latex from GitHub into ~/.grok/skills.\n' >&2
+  printf 'Default URL: %s (also accepts a trailing .git).\n' "$DEFAULT_REPO_URL" >&2
+  printf 'REF defaults to development branch main.\n' >&2
+}
+
+normalize_repo_url() {
+  local url=$1
+  url=${url%%[[:space:]]*}
+  url=${url%"${url##*[![:space:]]}"}
+  case "$url" in
+    *.git) url=${url%.git} ;;
+  esac
+  printf '%s\n' "$url"
 }
 
 is_pdf_to_latex_installation() {
@@ -32,13 +47,13 @@ PY
 }
 
 download_skill_package() {
-  # Args: ref dest name
+  # Args: ref dest name repo_url
   # Produces: "$dest/$name" containing the skill package (SKILL.md at root).
   local ref=$1
   local dest=$2
   local name=$3
-  local repo_url=${PDF_TO_LATEX_REPO_URL:-https://github.com/zuchengchen/pdf-to-latex}
-  local repo_path=${PDF_TO_LATEX_REPO_PATH:-skill}
+  local repo_url=$4
+  local repo_path=${PDF_TO_LATEX_REPO_PATH:-$DEFAULT_REPO_PATH}
   local work=
   work=$(mktemp -d "$dest/.download-src.XXXXXX")
   if command -v git >/dev/null 2>&1; then
@@ -86,6 +101,7 @@ download_skill_package() {
 }
 
 ref=main
+repo_url=${PDF_TO_LATEX_REPO_URL:-$DEFAULT_REPO_URL}
 while [[ $# -gt 0 ]]; do
   case "$1" in
     --ref)
@@ -104,6 +120,22 @@ while [[ $# -gt 0 ]]; do
       fi
       shift
       ;;
+    --url)
+      if [[ $# -lt 2 || -z "$2" || "$2" == -* ]]; then
+        usage
+        exit 2
+      fi
+      repo_url=$2
+      shift 2
+      ;;
+    --url=*)
+      repo_url=${1#--url=}
+      if [[ -z "$repo_url" || "$repo_url" == -* ]]; then
+        usage
+        exit 2
+      fi
+      shift
+      ;;
     -h|--help)
       usage
       exit 0
@@ -115,14 +147,14 @@ while [[ $# -gt 0 ]]; do
   esac
 done
 
+repo_url=$(normalize_repo_url "$repo_url")
 export PYTHONDONTWRITEBYTECODE=1
 
 grok_home=${GROK_HOME:-$HOME/.grok}
 skills_dir="$grok_home/skills"
 skill_dir="$skills_dir/pdf-to-latex"
 installer=${PDF_TO_LATEX_INSTALLER:-}
-repo_url=${PDF_TO_LATEX_REPO_URL:-https://github.com/zuchengchen/pdf-to-latex}
-repo_path=${PDF_TO_LATEX_REPO_PATH:-skill}
+repo_path=${PDF_TO_LATEX_REPO_PATH:-$DEFAULT_REPO_PATH}
 lock_dir="$skills_dir/.pdf-to-latex.install.lock"
 staging_root=
 rollback_root=
@@ -205,7 +237,7 @@ if [[ -n "$installer" ]]; then
     --name pdf-to-latex \
     --method download
 else
-  download_skill_package "$ref" "$staging_root" pdf-to-latex
+  download_skill_package "$ref" "$staging_root" pdf-to-latex "$repo_url"
 fi
 
 fresh="$staging_root/pdf-to-latex"
@@ -243,5 +275,5 @@ if [[ "$rollback_active" == true ]]; then
   rollback_active=false
 fi
 
-printf '%s pdf-to-latex from ref %s at %s\n' "$action" "$ref" "$skill_dir"
-printf 'Start a new Grok session, or wait for skill auto-reload, to load the updated skill.\n'
+printf '%s pdf-to-latex from %s (ref %s) at %s\n' "$action" "$repo_url" "$ref" "$skill_dir"
+printf 'Start a new Grok session, or wait for skill auto-reload, to load the skill.\n'

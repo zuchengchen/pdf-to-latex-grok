@@ -58,14 +58,22 @@ if [[ -f "$repo_dir/README.md" ]]; then
     printf 'README.md must document the default Goal-backed execution policy.\n' >&2
     exit 1
   }
-  grep -Fq '更新 skill pdf-to-latex' "$repo_dir/README.md" || {
-    printf 'README.md must document the fast self-update command.\n' >&2
+  grep -Fq '安装skill https://github.com/zuchengchen/pdf-to-latex-grok.git' "$repo_dir/README.md" || {
+    printf 'README.md must document the Grok install command.\n' >&2
+    exit 1
+  }
+  grep -Fq '更新skill https://github.com/zuchengchen/pdf-to-latex-grok.git' "$repo_dir/README.md" || {
+    printf 'README.md must document the Grok update command.\n' >&2
     exit 1
   }
 fi
 if [[ -f "$repo_dir/INSTALL.md" ]]; then
-  grep -Fq '更新 skill pdf-to-latex' "$repo_dir/INSTALL.md" || {
-    printf 'INSTALL.md must document the fast self-update command.\n' >&2
+  grep -Fq '安装skill https://github.com/zuchengchen/pdf-to-latex-grok.git' "$repo_dir/INSTALL.md" || {
+    printf 'INSTALL.md must document the Grok install command.\n' >&2
+    exit 1
+  }
+  grep -Fq '更新skill https://github.com/zuchengchen/pdf-to-latex-grok.git' "$repo_dir/INSTALL.md" || {
+    printf 'INSTALL.md must document the Grok update command.\n' >&2
     exit 1
   }
 fi
