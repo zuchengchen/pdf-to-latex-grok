@@ -94,19 +94,22 @@ front/main/back matter boundaries, while math traits add math and glyph tracking
 Read-only `review` operations compile and render only in temporary copies and do
 not update the user's project.
 
-Prefer auto-start continuity: never block on Goal startup. A single
-`/pdf-to-latex …` request is enough to begin work for full conversions, broad
-resume or refinement, publication-scale work, and multi-batch tasks. When a
-matching Goal is already active, continue it with `update_goal`; otherwise use
-`resumable` by default at the same delivery quality. Project files such as
-`conversion-state.md` remain the durable progress record. Optional `/goal`
-pinning is never required before reconstruction starts.
+Prefer auto-start **run-to-completion**: never block on Goal startup, and never
+pause mid-pipeline waiting for the user to say 继续 / continue. A single
+`/pdf-to-latex …` request should drive full conversions, broad resume or
+refinement, publication-scale work, and multi-batch tasks through all planned
+batches, integration, gates, and a terminal outcome in one continuous session
+when the host allows. When a matching Goal is already active, continue it with
+`update_goal`; otherwise use `resumable` by default at the same delivery
+quality. Project files such as `conversion-state.md` remain the durable progress
+record for forced mid-run stops and later resume. Optional `/goal` pinning is
+never required before reconstruction starts.
 
 ## Parallel Reconstruction
 
 Long resumable and goal-backed conversions **prefer** one parent controller plus a bounded pool of `spawn_subagent` workers to save parent tokens. Each worker gets a compact context packet (page lists, evidence paths, hashes, path to `worker-brief.md`—not full skill/Goal/chat dumps), writes only a page-IR shard, and does not edit shared LaTeX, workflow state, or the final PDF. Page ownership is non-overlapping; neighboring pages are optional read-only context because page boundaries are not semantic boundaries.
 
-Before dispatch, `skill/scripts/plan_batches.py` uses local `pdfinfo` and `pdftotext` evidence to write a source-bound `work/page-index.json`. Batch sizes adapt by source kind and traits: digital prose uses larger batches; scanned and mixed empty text layers stay multi-page visual batches (not one worker per page by default); one-page workers are reserved for true high-risk pages. Multi-page turns require material progress before voluntary yield; large projects compile mainly at chapter boundaries.
+Before dispatch, `skill/scripts/plan_batches.py` uses local `pdfinfo` and `pdftotext` evidence to write a source-bound `work/page-index.json`. Batch sizes adapt by source kind and traits: digital prose uses larger batches; scanned and mixed empty text layers stay multi-page visual batches (not one worker per page by default); one-page workers are reserved for true high-risk pages. Multi-page work runs until complete by default (dispatch remaining batches in a bounded concurrent pool; no continue prompts); large projects compile mainly at chapter boundaries.
 
 New workers should emit compact page-IR v2 shards: page status and counts stay in the shard, while detailed IR is a hashed detail artifact. The parent reads the summary in `batch-manifest.json` and opens detail only when a blocker, uncertainty, cross-page boundary, or failed integration requires it. `skill/scripts/report_worker_usage.py` aggregates optional input, cached-input, output, reasoning, retry, and duration telemetry.
 

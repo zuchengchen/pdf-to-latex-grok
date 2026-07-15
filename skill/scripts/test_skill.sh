@@ -62,6 +62,10 @@ if [[ -f "$repo_dir/README.md" ]]; then
     printf 'README.md must document resumable continuity.\n' >&2
     exit 1
   }
+  grep -Fq 'run-to-completion' "$repo_dir/README.md" || {
+    printf 'README.md must document run-to-completion continuity.\n' >&2
+    exit 1
+  }
   grep -Fq '安装skill https://github.com/zuchengchen/pdf-to-latex-grok.git' "$repo_dir/README.md" || {
     printf 'README.md must document the Grok install command.\n' >&2
     exit 1

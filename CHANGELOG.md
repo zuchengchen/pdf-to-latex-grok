@@ -2,10 +2,13 @@
 
 ## Unreleased
 
+- Default to run-to-completion for convert/resume/refine: finish all planned
+  batches, integration, refinement, and gates in one continuous session; forbid
+  voluntary yield that waits for 继续 / continue between batches.
 - Adaptive batch planning: scanned/mixed empty text layers stay multi-page
   batches (not automatic single-page critical); scale sizes by source kind and
   traits; add `worker-brief.md` template.
-- Enforce minimum progress per turn and scale-aware compile cadence for
+- Enforce material progress while looping and scale-aware compile cadence for
   multi-page work.
 - Prefer spawning subagents for multi-page reconstruction with minimal
   per-worker context packets to reduce token use.

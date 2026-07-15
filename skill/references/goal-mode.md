@@ -6,9 +6,9 @@ On Grok, agent tools cannot create a Goal. `update_goal` reports progress only w
 
 ## Auto-Start Rule (Hard)
 
-Prefer auto-start continuity: when the user issues a complete `/pdf-to-latex` (or equivalent) task request, begin reconstruction immediately.
+Prefer auto-start **run-to-completion**: when the user issues a complete `/pdf-to-latex` (or equivalent) task request, begin reconstruction immediately and keep going until a terminal outcome.
 
-**Never block on Goal startup.** Do not pause, yield, or wait for the user to run `/goal` before scaffolding, evidence, workers, compilation, or the next checkpoint. Do not treat a long `/goal` objective template as the default next user action.
+**Never block on Goal startup.** Do not pause, yield, or wait for the user to run `/goal` before scaffolding, evidence, workers, compilation, or the next checkpoint. Do not treat a long `/goal` objective template as the default next user action. Do not pause for the user to say 继续 / continue between batches or stages.
 
 Do not ask for separate Goal confirmation.
 
@@ -35,15 +35,15 @@ An unfinished **unrelated** Goal is a real user-decision boundary: ask which obj
 If a multi-session pin would help and no matching Goal is active, you may mention once that the user can pin progress with:
 
 ```text
-/goal Use /pdf-to-latex to OPERATION SOURCE into TARGET at DELIVERY_LEVEL. Treat TARGET/conversion-state.md as the durable source of progress. Continue until complete, approved downgrade, or true blocker.
+/goal Use /pdf-to-latex to OPERATION SOURCE into TARGET at DELIVERY_LEVEL. Treat TARGET/conversion-state.md as the durable source of progress. Run until complete, approved downgrade, or true blocker without waiting for continue prompts.
 ```
 
-Keep any such tip optional, brief, and non-blocking. Never require it. Never wait for it. Prefer continuing the conversion over discussing Goal mode.
+Keep any such tip optional, brief, and non-blocking. Never require it. Never wait for it. Prefer finishing the conversion over discussing Goal mode.
 
 When a matching Goal is active, use an objective equivalent to:
 
 ```text
-Use /pdf-to-latex to OPERATION SOURCE into TARGET at DELIVERY_LEVEL. Treat TARGET/conversion-state.md as the durable source of progress. On every continuation, verify source identity, follow the recorded Next action, preserve user edits, complete the gates derived from workflow-contract.json, and run scripts/workflow_contract.py to validate the project. Continue automatically until the project reaches a valid complete outcome, a user-approved downgraded outcome, or a true blocker that requires user action.
+Use /pdf-to-latex to OPERATION SOURCE into TARGET at DELIVERY_LEVEL. Treat TARGET/conversion-state.md as the durable source of progress. Run to completion in one continuous loop: verify source identity, follow the recorded Next action, dispatch remaining batches, preserve user edits, complete the gates derived from workflow-contract.json, and run scripts/workflow_contract.py to validate the project. Do not stop for user continue/继续 prompts. Continue automatically until the project reaches a valid complete outcome, a user-approved downgraded outcome, or a true blocker that requires user action.
 ```
 
 ## Parallel Worker Protocol
@@ -94,30 +94,36 @@ Merge shards through `scripts/merge_shards.py` at one integration point. The mer
 
 Keep child responses short and durable. The parent should record only batch IDs, coverage, compact summaries, hashes, blockers, usage, and the next action in its working context; full transcripts and detail artifacts remain in project files. **Do not read every detail artifact after a successful merge.** Load detail only for a blocker, uncertainty, cross-page reconciliation, or failed integration. Close completed workers, retry only failed or stale shards, and invalidate shards when the source digest or referenced snapshot changes.
 
-## Continuation
+## Continuation And Run-To-Completion
 
-On every continuation (same session, resume request, or active Goal):
+**Run until complete (hard default).** One user convert/resume/refine request means finish the whole pipeline in that session when the host allows: triage → scaffold → evidence → all planned batches → merge/integration → refinement → required gates → terminal outcome. Do not treat batch boundaries, chapter boundaries, or the first successful compile as natural places to stop and wait for the user.
+
+**Never ask the user to type 继续, continue, next, or equivalent just to proceed.** Those are not valid stop reasons. Do not end a turn with “say continue to proceed,” a partial progress dump, or only the next batch id while open work remains and no true boundary has been reached.
+
+On every continuation (same session, resume request, or active Goal), and while outcome remains `in-progress` in the initial session:
 
 1. Read `conversion-state.md` first when it exists.
 2. Verify the recorded source identity before source-aware work.
 3. Check that active files and evidence for the recorded checkpoint still exist.
-4. Perform the next concrete milestone or bounded batch.
-5. If the milestone uses workers, dispatch the non-overlapping batches from `work/page-index.json` via `spawn_subagent`, merge their validated results before editing shared source, and keep only the merger summary in parent context.
-6. Compile and inspect the affected output when the milestone changes final LaTeX.
-7. Update state, notes, manifests, inventories, and the batch ledger only after supporting files or checks exist. Run `scripts/report_worker_usage.py PROJECT_DIR` when worker usage data is available. When a matching Goal is active, report intermediate progress with `update_goal` messages when useful; never treat progress updates as completion.
-8. Run the applicable workflow query or validation command and continue while the valid outcome remains `in-progress`.
+4. Perform the next concrete milestone, then **loop** to the following milestones without waiting for the user.
+5. If workers are needed, dispatch **all remaining non-overlapping batches** from `work/page-index.json` via a bounded concurrent `spawn_subagent` pool (not one batch then stop). Merge validated results before editing shared source, and keep only the merger summary in parent context.
+6. Compile and inspect the affected output when the milestone changes final LaTeX (scale-aware cadence).
+7. Update state, notes, manifests, inventories, and the batch ledger only after supporting files or checks exist. Run `scripts/report_worker_usage.py PROJECT_DIR` when worker usage data is available. When a matching Goal is active, report intermediate progress with `update_goal` messages when useful; never treat progress updates as completion or as a reason to stop the parent loop.
+8. Run the applicable workflow query or validation command and **immediately continue** while the valid outcome remains `in-progress`.
 
-Do not yield merely because one batch or the first successful compile finished. Continue automatically while meaningful work remains and no user-decision boundary has been reached. Before ending a turn with work left, write a concrete Next action into `conversion-state.md`.
+Do not yield merely because one batch, one chapter, a midpoint review, or the first successful compile finished. Continue automatically while meaningful work remains and no user-decision boundary has been reached. End the user-facing reply only when the outcome is terminal or a true stop condition applies.
 
-## Minimum Progress Per Turn
+## Forced Stops Only
 
-Unless a true user-decision boundary or hard environment failure stops work, each agent turn on multi-page reconstruction must make **material progress** before voluntary yield:
+Voluntary mid-pipeline yield is forbidden. Stop early only for:
 
-1. Complete at least **one full planned batch** from `work/page-index.json` (dispatch → shard → merge), **or**
-2. Complete at least **one structural unit** already under edit (for example one section or one chapter file milestone), **or**
-3. Advance scaffold/identity/evidence setup through the next durable checkpoint when batches are not yet available.
+1. A true **user-decision boundary** (overwrite risk, source replacement, unsafe build capability, material approximation, delivery downgrade, conflicting unrelated Goal, unreadable required region, or another authorization boundary), **or**
+2. A **hard environment failure** that blocks further work (missing required tool, unreadable source, unrecoverable build environment), **or**
+3. A **genuine host runtime limit** that prevents more tool calls in this turn (budget exhausted mid-work).
 
-Do not end a turn after only status narration, re-reading state, or a single compile with no new reconstructed content when open batches remain. If the runtime budget is exhausted mid-batch, finish the current merge if possible, then record precise Next action (batch id and pages).
+If forced to stop mid-work, finish the current merge when possible, write a concrete Next action into `conversion-state.md` (batch id / pages / file), set outcome `in-progress`, and report only what was completed plus how to resume—without requiring a special phrase beyond re-invoking the skill or saying resume. On the next turn, resume and again run to completion for remaining work.
+
+While still running, each loop iteration must make **material progress** (not status-only narration): complete planned batches (dispatch → shard → merge), advance a structural unit under edit, or move scaffold/identity/evidence to the next durable checkpoint. Do not end a turn after only re-reading state or a single compile with no new reconstructed content when open batches remain.
 
 ## Compile Cadence (Scale-Aware)
 
