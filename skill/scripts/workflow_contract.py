@@ -33,8 +33,9 @@ HEADING_RE = re.compile(r"^###[ \t]+(.+?)[ \t]*$")
 FENCE_RE = re.compile(r"^[ \t]*(`{3,}|~{3,})")
 FENCE_CLOSE_RE = re.compile(r"^[ \t]*(`{3,}|~{3,})[ \t]*$")
 SHA256_RE = re.compile(r"^[0-9a-fA-F]{64}$")
-GOAL_POLICY_MARKER = "prefer goal-backed execution by default"
+GOAL_POLICY_MARKER = "never block on goal startup"
 GOAL_REFERENCE = "references/goal-mode.md"
+GOAL_RESUMABLE_DEFAULT_MARKER = "use `resumable` by default"
 SELF_UPDATE_SCRIPT = "scripts/update_installed_skill.sh"
 SELF_UPDATE_COMMAND = 'bash "$SKILL_DIR/scripts/update_installed_skill.sh"'
 SELF_UPDATE_EXACT_ROUTE_MARKER = (
@@ -1582,7 +1583,13 @@ def validate_package(skill_dir: Path, contract: dict[str, Any]) -> list[str]:
             if GOAL_REFERENCE not in skill_text:
                 errors.append(f"SKILL.md must reference {GOAL_REFERENCE}.")
             if GOAL_POLICY_MARKER not in skill_text.lower():
-                errors.append("SKILL.md must prefer Goal-backed execution by default.")
+                errors.append(
+                    "SKILL.md must never block on Goal startup (auto-start continuity)."
+                )
+            if GOAL_RESUMABLE_DEFAULT_MARKER not in skill_text.lower():
+                errors.append(
+                    "SKILL.md must use resumable by default when Goal is not already active."
+                )
             if SELF_UPDATE_SCRIPT not in skill_text:
                 errors.append(f"SKILL.md must reference {SELF_UPDATE_SCRIPT}.")
             if SELF_UPDATE_COMMAND not in skill_text:
@@ -1602,21 +1609,27 @@ def validate_package(skill_dir: Path, contract: dict[str, Any]) -> list[str]:
             errors.append(f"Cannot read UTF-8 {GOAL_REFERENCE}: {exc}")
         else:
             required_goal_rules = {
-                GOAL_POLICY_MARKER: "automatic Goal selection",
+                GOAL_POLICY_MARKER: "never block on Goal startup",
+                GOAL_RESUMABLE_DEFAULT_MARKER: "resumable default when Goal inactive",
                 "do not ask for separate goal confirmation": "no separate Goal confirmation",
-                "fall back to `resumable`": "resumable fallback",
+                "never lower delivery quality": "quality independent of Goal",
                 "user-decision": "user-decision stop boundary",
                 "check current goal state": "existing Goal inspection",
                 "do not set a token budget unless the user explicitly requested one": "explicit token-budget authority",
                 "mark a matching goal complete only after": "terminal completion validation",
                 "blocker threshold": "Goal blocker-threshold handling",
                 "update_goal": "Grok update_goal progress/completion",
-                "/goal": "Grok /goal activation handoff",
                 "spawn_subagent": "Grok spawn_subagent workers",
+                "conversion-state.md": "project state authoritative",
             }
             for marker, label in required_goal_rules.items():
                 if marker.lower() not in goal_text_lower:
                     errors.append(f"{GOAL_REFERENCE} is missing required rule: {label}.")
+            # Optional multi-session pin may mention /goal, but hard-wait wording is forbidden.
+            if "continue only after" in goal_text_lower and "goal" in goal_text_lower:
+                errors.append(
+                    f"{GOAL_REFERENCE} must not hard-wait for Goal activation before work."
+                )
             if "codex" in goal_text_lower or "$pdf-to-latex" in goal_text:
                 errors.append(f"{GOAL_REFERENCE} must not reference Codex or $pdf-to-latex.")
 

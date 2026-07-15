@@ -94,22 +94,23 @@ front/main/back matter boundaries, while math traits add math and glyph tracking
 Read-only `review` operations compile and render only in temporary copies and do
 not update the user's project.
 
-Prefer Goal-backed execution by default for full conversions, broad resume or
-refinement work, writable publication-scale work, and work expected to span
-multiple batches. The skill does not ask for a separate Goal confirmation. It
-starts or continues Goal mode when the current Grok runtime permits it (via
-`/goal` handoff and `update_goal` progress) and falls back to the same-quality
-`resumable` workflow when Goal startup is unavailable or disallowed.
+Prefer auto-start continuity: never block on Goal startup. A single
+`/pdf-to-latex …` request is enough to begin work for full conversions, broad
+resume or refinement, publication-scale work, and multi-batch tasks. When a
+matching Goal is already active, continue it with `update_goal`; otherwise use
+`resumable` by default at the same delivery quality. Project files such as
+`conversion-state.md` remain the durable progress record. Optional `/goal`
+pinning is never required before reconstruction starts.
 
 ## Parallel Reconstruction
 
-Long resumable and Goal-backed conversions use one parent Goal as the controller and a bounded pool of isolated workers. Workers may inspect one page, region, or small structural batch and produce a page-IR shard, but they do not edit shared LaTeX, workflow state, or the final PDF. Page ownership is non-overlapping; neighboring pages are read-only context because page boundaries are not semantic boundaries.
+Long resumable and goal-backed conversions use one parent controller and a bounded pool of isolated workers. Workers may inspect one page, region, or small structural batch and produce a page-IR shard, but they do not edit shared LaTeX, workflow state, or the final PDF. Page ownership is non-overlapping; neighboring pages are read-only context because page boundaries are not semantic boundaries.
 
 Before dispatch, `skill/scripts/plan_batches.py` uses local `pdfinfo` and `pdftotext` evidence to write a source-bound `work/page-index.json`. Ordinary digital prose is grouped into larger batches, complex pages use smaller batches, and one-page or one-region workers are reserved for high-risk pages. This avoids paying the fixed worker prompt cost for every page.
 
 New workers should emit compact page-IR v2 shards: page status and counts stay in the shard, while detailed IR is a hashed detail artifact. The parent reads the summary in `batch-manifest.json` and opens detail only when a blocker, uncertainty, cross-page boundary, or failed integration requires it. `skill/scripts/report_worker_usage.py` aggregates optional input, cached-input, output, reasoning, retry, and duration telemetry.
 
-The scaffold records worker ownership and artifact hashes in `batch-manifest.json`, stores shards under `work/shards/`, and merges them through `skill/scripts/merge_shards.py`. Cross-page continuity, global labels and references, bibliography/index/glossary, final source edits, compilation, and Goal completion remain parent-agent responsibilities. On Grok, workers are launched with `spawn_subagent` in an isolated context; the parent passes a compact snapshot and evidence packet instead of the full Goal history.
+The scaffold records worker ownership and artifact hashes in `batch-manifest.json`, stores shards under `work/shards/`, and merges them through `skill/scripts/merge_shards.py`. Cross-page continuity, global labels and references, bibliography/index/glossary, final source edits, compilation, and terminal outcomes remain parent-agent responsibilities. On Grok, workers are launched with `spawn_subagent` in an isolated context; the parent passes a compact snapshot and evidence packet instead of the full parent history.
 
 ## Safety And Quality
 
@@ -187,7 +188,7 @@ python3 skill/scripts/workflow_contract.py validate-package skill
 ## Usage Examples
 
 ```text
-/pdf-to-latex 把 ./paper.pdf 重建成可编辑 XeLaTeX 项目并完成语义检查；默认自动启动或继续 Goal，持续执行到工作流完成或遇到必须由我决定的问题
+/pdf-to-latex 把 ./paper.pdf 重建成可编辑 XeLaTeX 项目并完成语义检查；立刻开工，不要等待 /goal，持续执行到工作流完成或遇到必须由我决定的问题
 ```
 
 ```text

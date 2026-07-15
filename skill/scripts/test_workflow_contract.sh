@@ -290,13 +290,15 @@ import sys
 
 path = pathlib.Path(sys.argv[1])
 text = path.read_text(encoding="utf-8")
-text = text.replace("Prefer Goal-backed execution by default", "Consider Goal-backed execution")
+text = text.replace("never block on Goal startup", "optionally wait for Goal startup")
+text = text.replace("use `resumable` by default", "prefer goal-backed by default")
+text = text.replace("Never block on Goal startup", "Optionally wait for Goal startup")
 text = text.replace("references/goal-mode.md", "references/pdf-analysis.md")
 path.write_text(text, encoding="utf-8")
 PY
 expect_status 1 "$validator" validate-package "$missing_goal_policy_skill"
 grep -Fq 'SKILL.md must reference references/goal-mode.md' "$tmp_dir/last.stderr" || fail 'package validation accepted a missing Goal reference route'
-grep -Fq 'SKILL.md must prefer Goal-backed execution by default' "$tmp_dir/last.stderr" || fail 'package validation accepted a missing automatic Goal policy'
+grep -Fq 'SKILL.md must never block on Goal startup' "$tmp_dir/last.stderr" || fail 'package validation accepted a missing never-block-on-Goal policy'
 
 missing_slash_command_skill="$tmp_dir/missing-slash-command-skill"
 cp -R "$script_dir/.." "$missing_slash_command_skill"
@@ -326,9 +328,9 @@ grep -Fq 'SKILL.md must not reference Codex or $pdf-to-latex' "$tmp_dir/last.std
 
 incomplete_goal_reference_skill="$tmp_dir/incomplete-goal-reference-skill"
 cp -R "$script_dir/.." "$incomplete_goal_reference_skill"
-printf '%s\n' '# Goal-Backed Execution' >"$incomplete_goal_reference_skill/references/goal-mode.md"
+printf '%s\n' '# Continuity' >"$incomplete_goal_reference_skill/references/goal-mode.md"
 expect_status 1 "$validator" validate-package "$incomplete_goal_reference_skill"
-grep -Fq 'references/goal-mode.md is missing required rule: automatic Goal selection' "$tmp_dir/last.stderr" || fail 'package validation accepted an incomplete Goal reference'
+grep -Fq 'references/goal-mode.md is missing required rule: never block on Goal startup' "$tmp_dir/last.stderr" || fail 'package validation accepted an incomplete Goal reference'
 
 missing_goal_runtime_rules_skill="$tmp_dir/missing-goal-runtime-rules-skill"
 cp -R "$script_dir/.." "$missing_goal_runtime_rules_skill"
@@ -343,6 +345,8 @@ replacements = {
     "Do not set a token budget unless the user explicitly requested one": "Choose a suitable token budget",
     "Mark a matching Goal complete only after": "Conclude a matching Goal when",
     "blocker threshold": "blocking policy",
+    "Never block on Goal startup": "Prefer waiting for Goal startup",
+    "use `resumable` by default": "use goal-backed by default",
 }
 for old, new in replacements.items():
     text = text.replace(old, new)
@@ -353,6 +357,7 @@ grep -Fq 'missing required rule: existing Goal inspection' "$tmp_dir/last.stderr
 grep -Fq 'missing required rule: explicit token-budget authority' "$tmp_dir/last.stderr" || fail 'package validation accepted implicit Goal token budgets'
 grep -Fq 'missing required rule: terminal completion validation' "$tmp_dir/last.stderr" || fail 'package validation accepted weak Goal completion rules'
 grep -Fq 'missing required rule: Goal blocker-threshold handling' "$tmp_dir/last.stderr" || fail 'package validation accepted weak Goal blocker handling'
+grep -Fq 'missing required rule: never block on Goal startup' "$tmp_dir/last.stderr" || fail 'package validation accepted hard-wait Goal policy'
 
 missing_self_updater_skill="$tmp_dir/missing-self-updater-skill"
 cp -R "$script_dir/.." "$missing_self_updater_skill"

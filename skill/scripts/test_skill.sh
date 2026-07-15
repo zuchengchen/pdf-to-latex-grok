@@ -54,8 +54,12 @@ PY
 python3 "$script_dir/workflow_contract.py" validate-contract >/dev/null
 python3 "$script_dir/workflow_contract.py" validate-package "$skill_dir" >/dev/null
 if [[ -f "$repo_dir/README.md" ]]; then
-  grep -Fq 'Prefer Goal-backed execution by default' "$repo_dir/README.md" || {
-    printf 'README.md must document the default Goal-backed execution policy.\n' >&2
+  grep -Fq 'never block on Goal startup' "$repo_dir/README.md" || {
+    printf 'README.md must document never-block-on-Goal auto-start continuity.\n' >&2
+    exit 1
+  }
+  grep -Fq 'resumable' "$repo_dir/README.md" || {
+    printf 'README.md must document resumable continuity.\n' >&2
     exit 1
   }
   grep -Fq '安装skill https://github.com/zuchengchen/pdf-to-latex-grok.git' "$repo_dir/README.md" || {

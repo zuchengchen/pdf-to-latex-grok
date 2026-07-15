@@ -2,6 +2,9 @@
 
 ## Unreleased
 
+- Make continuity auto-start: never block on Goal startup; use `resumable` by
+  default when no matching Goal is active; keep delivery quality independent
+  of Goal; optional `/goal` pin is non-blocking.
 - Make Grok install/update URL-based:
   `安装skill https://github.com/zuchengchen/pdf-to-latex-grok.git` and
   `更新skill https://github.com/zuchengchen/pdf-to-latex-grok.git`.
